@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     DOMAIN: str
     DEBUG: str
-    REDIS_URL: str
+    # REDIS_URL: str
     
     X_API_KEY: str
     X_API_KEY_SECRET: str

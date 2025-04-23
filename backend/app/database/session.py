@@ -29,7 +29,7 @@ async def create_tables():
         await conn.run_sync(Base.metadata.create_all)
 
 # redis://redis:6379/0
-redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+# redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 
 async def get_one_object_by_filter(db: AsyncSession, model, **filters):
