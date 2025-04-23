@@ -1,16 +1,28 @@
 version: '3.8'
 
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    networks:
+      - app-network
+    command: "npm start"
+
   app:
     build: 
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - ./backend/.env
     volumes:
-      - .:/app
+      - ./backend:/app
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,6 +51,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - app
+    networks:
+      - app-network
 
   postgres:
     image: postgres:latest
