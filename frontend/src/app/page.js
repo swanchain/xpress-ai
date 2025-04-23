@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Navbar } from '../components/Navbar'
+import { Navbar } from '../components/NavBar'
 import { useAppKitAccount, useAppKit } from '@reown/appkit/react'
 
 export default function Home() {
