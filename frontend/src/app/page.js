@@ -1,103 +1,110 @@
-import Image from "next/image";
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { Navbar } from '../components/Navbar'
+import { useAppKitAccount, useAppKit } from '@reown/appkit/react'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { isConnected } = useAppKitAccount()
+  const { open } = useAppKit()
+  const router = useRouter()
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Hero */}
+      <header className="flex-grow flex flex-col items-center justify-center text-center px-6">
+        <h1 className="text-5xl md:text-6xl font-extrabold mb-4">Xpress.ai</h1>
+        <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mb-8">
+          Unlock the power of AI-driven tweets—crafted in your unique voice,
+          fueled by GPT-4o & DeepSeek.
+        </p>
+        {!isConnected && (
+          <p className="text-sm text-red-500 mb-6">
+            Connect your wallet to get started—no credit card required.
+          </p>
+        )}
+        <button
+          onClick={() => (isConnected ? router.push('/account') : open())}
+          className="px-8 py-4 bg-blue-600 text-white rounded-lg text-lg hover:bg-blue-700 transition"
+        >
+          {isConnected ? 'Go to Dashboard' : 'Connect Wallet'}
+        </button>
+      </header>
+
+      {/* Features */}
+      <section className="py-16 px-6 md:px-0 max-w-5xl mx-auto grid gap-10 md:grid-cols-2">
+        <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+          <h2 className="text-2xl font-semibold mb-2">
+            Phase 1: Tweet Like You
+          </h2>
+          <p className="text-gray-700 mb-4">
+            By analyzing your past tweets and trending topics, Xpress.ai crafts
+            suggestions that match your style—so every tweet feels authentically
+            you.
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+        <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+          <h2 className="text-2xl font-semibold mb-2">
+            Phase 2: Smart Replies
+          </h2>
+          <p className="text-gray-700 mb-4">
+            Summarize threads, generate supportive, neutral, or debate-style
+            replies, and flag risky content—timely, on-brand responses at your
+            fingertips.
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+          <h2 className="text-2xl font-semibold mb-2">
+            Trend-Driven Engagement
+          </h2>
+          <p className="text-gray-700 mb-4">
+            Spot viral tweets for retweets or quotes with compelling
+            commentary—boost visibility and grow your audience effortlessly.
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+          <h2 className="text-2xl font-semibold mb-2">
+            Future: Omni-Channel Replies
+          </h2>
+          <p className="text-gray-700 mb-4">
+            Coming soon—automate DMs and replies across X, Telegram, WhatsApp,
+            Signal, Reachme.io, and more.
+          </p>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="bg-white py-16 px-6 md:px-0">
+        <div className="max-w-3xl mx-auto text-center mb-8">
+          <h2 className="text-3xl font-bold">Pricing Plans</h2>
+          <p className="text-gray-600">
+            Start free, scale with Pro as you grow.
+          </p>
+        </div>
+        <div className="max-w-4xl mx-auto grid gap-8 md:grid-cols-2">
+          <div className="p-6 border rounded-xl">
+            <h3 className="text-2xl font-semibold mb-2">Free Plan</h3>
+            <p className="text-gray-700 mb-4">
+              5 AI-powered tweet suggestions—test the magic at no cost.
+            </p>
+            <span className="text-4xl font-bold">Free</span>
+          </div>
+          <div className="p-6 border rounded-xl">
+            <h3 className="text-2xl font-semibold mb-2">Pro Plan</h3>
+            <p className="text-gray-700 mb-4">
+              ₿0.015 (≈$0.10) per suggestion. Bulk packs unlock historical-data
+              training and volume discounts.
+            </p>
+            <span className="text-4xl font-bold">₿0.015</span>
+            <p className="text-sm text-gray-500 mt-1">per tweet suggestion</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-6 text-center text-gray-500 text-sm">
+        © {new Date().getFullYear()} Xpress.ai • Crafted with AI for your voice.
       </footer>
     </div>
-  );
+  )
 }
