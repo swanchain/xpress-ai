@@ -116,10 +116,22 @@ async def login_x_account(
         "user": {
             # "x_user_id": user.x_user_id,
             "x_screen_name": user.x_screen_name,
-            "ai_role_id": user.ai_role_id
+            "ai_role_id": user.ai_role_id,
+            "credit": user.credit
         }
     }
     return res
+
+
+@router.get("/get-user", response_model=dict)
+async def generate_tweet(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return {
+        "status": "Get user successfully",
+        "user": user.to_dict()
+    }
 
 
 # @router.post("/get-wallet-sign-message")

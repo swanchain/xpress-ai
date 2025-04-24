@@ -16,4 +16,15 @@ class User(Base):
     credit = mapped_column(DECIMAL(10, 2), nullable=False, default=0.00)
     created_at = mapped_column(BigInteger, nullable=False)
     updated_at = mapped_column(BigInteger, nullable=False)
-    
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            # "wallet_address": self.wallet_address,
+            # "x_user_id": self.x_user_id,
+            "x_screen_name": self.x_screen_name,
+            # "ai_role_id": self.ai_role_id,
+            "credit": self.credit,
+            # "created_at": self.created_at,
+            # "updated_at": self.updated_at,
+        }
