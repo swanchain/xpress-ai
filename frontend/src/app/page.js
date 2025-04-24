@@ -42,7 +42,7 @@ export default function Home() {
 
       <div className="relative min-h-screen bg-[#f5f5f7] text-dark font-display flex flex-col">
         {/* Navbar */}
-        <Navbar user={user} />
+        <Navbar user={user} setUser={setUser} />
 
         {/* Main Content */}
         <main className="flex-grow flex flex-col items-center justify-center px-4 text-center gap-5 bg-">

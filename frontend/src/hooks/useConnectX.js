@@ -62,7 +62,6 @@ export default function useConnectX() {
 
       if (res.status == 200) {
         localStorage.setItem('xpress_access_token', res.data.access_token)
-        localStorage.setItem('xpress_username', res.data.user.x_screen_name)
       }
 
       console.log('X account successfully connected')

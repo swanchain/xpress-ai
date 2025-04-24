@@ -2,8 +2,13 @@
 import useConnectX from "@/hooks/useConnectX";
 import TwitterIcon from "./TwitterIcon";
 
-export default function Navbar({ user }) {
+export default function Navbar({ user, setUser }) {
   const { connectX, verifyXConnection, connectLoad } = useConnectX();
+
+  const logout = () => {
+    localStorage.removeItem("xpress_access_token");
+    window.location.reload();
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur border-b border-white/20 z-10">
@@ -28,7 +33,7 @@ export default function Navbar({ user }) {
           🪙 <span className="ml-2">5 Credits</span>
         </button> */}
           {user ? (
-            <div>Logged in as {user.x_screen_name}</div>
+            <div onClick={logout}>Logged in as {user.x_screen_name}</div>
           ) : (
             <button className="black-btn text-base" onClick={connectX}>
               <span className="flex flex-row justify-center items-center gap-x-2">
