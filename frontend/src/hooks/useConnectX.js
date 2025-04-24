@@ -54,11 +54,16 @@ export default function useConnectX() {
 
     try {
       // Step 2: Send OAuth Token & Verifier to Backend
-      await apiClient.post(`user/connect_x_account`, formData, {
+      const res = await apiClient.post(`user/login_x_account`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       })
+
+      if (res.status == 200) {
+        localStorage.setItem('xpress_access_token', res.data.access_token)
+        localStorage.setItem('xpress_username', res.data.user.x_screen_name)
+      }
 
       console.log('X account successfully connected')
     } catch (error) {
@@ -75,7 +80,7 @@ export default function useConnectX() {
         console.error('Error verifying X connection:', error)
       }
     } finally {
-      router.push('/account?socials=true&') // Redirect after successful connection
+      //   router.push('/account?socials=true&') // Redirect after successful connection
       setConnectLoad(false)
     }
   }

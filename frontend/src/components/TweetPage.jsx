@@ -1,8 +1,5 @@
-import useConnectX from "@/hooks/useConnectX";
 import Head from "next/head";
-export default function LandingPage() {
-  const { connectX } = useConnectX();
-
+export default function TweetPage() {
   return (
     <>
       <Head>
@@ -23,9 +20,6 @@ export default function LandingPage() {
         <br />
         powered by artificial intelligence
       </p>
-      <button className="black-btn" onClick={connectX}>
-        Get Started
-      </button>
     </>
   );
 }
