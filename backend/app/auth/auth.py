@@ -55,7 +55,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise credentials_exception
 
     user_id = int(user_id)
-    user: User = await get_one_object_by_filter(db, User, user_id=user_id)
+    user: User = await get_one_object_by_filter(db, User, x_user_id=user_id)
     
     if user is None:
         raise credentials_exception
