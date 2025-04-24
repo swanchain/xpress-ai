@@ -70,8 +70,8 @@ async def x_oauth_login():
         raise HTTPException(status_code=500, detail="Internal server error.")
 
 
-@router.post("/connect_x_account")
-async def connect_x_account(
+@router.post("/login_x_account")
+async def login_x_account(
     oauth_token: str = Form(...), 
     oauth_verifier: str = Form(...),
     db: AsyncSession = Depends(get_db),
@@ -93,9 +93,7 @@ async def connect_x_account(
 
     user: User = await get_one_object_by_filter(db, User, x_user_id=x_user_id)
     if user:
-        logging.info("[+] Found user " + user.wallet_address)
-        user.x_user_id = x_user_id
-        user.x_screen_name = x_screen_name
+        logging.info("[+] Found user " + user.x_screen_name)
     else:
         user = User(
             x_user_id=x_user_id,
@@ -107,68 +105,68 @@ async def connect_x_account(
         await db.commit()
         await db.refresh(user)
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            'status': 'success',
-            'message': 'Connect X account successfully.'
-        }
-    )
-
-
-@router.post("/get-wallet-sign-message")
-async def get_wallet_sign_message_for_login_directly_by_wallet(
-    wallet_address: str, 
-    db: AsyncSession = Depends(get_db),
-):
-    if not wallet_address:
-        raise HTTPException(
-            status_code=400, 
-            detail="Invalid wallet address"
-        )
-    return {
-            "status": "success",
-            "data": get_sign_message(wallet_address=wallet_address)
-        }
-
-
-@router.post("/login-by-wallet")
-async def login_directly_by_wallet(
-    wallet_signature_login: WalletSignatureLogin,
-    db: AsyncSession = Depends(get_db),
-):
-    wallet_address = wallet_signature_login.wallet_address
-    signature = wallet_signature_login.signature
-    
-    original_message = get_sign_message(wallet_address)
-    logging.debug(f"{original_message=}")
-    logging.debug(f"{wallet_address=}")
-    logging.debug(f"{signature=}")
-    message_hash = encode_defunct(text=original_message)
-    signer = w3.eth.account.recover_message(message_hash, signature=signature)
-    logging.info(signer + " signed the message")
-
-    if signer == wallet_address:
-        user: User = await get_one_object_by_filter(db, User, wallet_address=wallet_address)
-        if user:
-            logging.info("[+] Found user " + user.wallet_address)
-        else:
-            user = User(
-                wallet_address=wallet_address,
-                created_at=int(time.time()),
-                updated_at=int(time.time())
-            )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
-    else:
-        raise HTTPException(status_code=401, detail='could not authenticate signature')
-
     access_token = create_access_token(
-        data={"sub": str(user.user_id)},
+        data={"sub": str(user.x_user_id)},
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     
     res = {"access_token": access_token, "token_type": "Bearer"}
     return res
+
+
+# @router.post("/get-wallet-sign-message")
+# async def get_wallet_sign_message_for_login_directly_by_wallet(
+#     wallet_address: str, 
+#     db: AsyncSession = Depends(get_db),
+# ):
+#     if not wallet_address:
+#         raise HTTPException(
+#             status_code=400, 
+#             detail="Invalid wallet address"
+#         )
+#     return {
+#             "status": "success",
+#             "data": get_sign_message(wallet_address=wallet_address)
+#         }
+
+
+# @router.post("/login-by-wallet")
+# async def login_directly_by_wallet(
+#     wallet_signature_login: WalletSignatureLogin,
+#     db: AsyncSession = Depends(get_db),
+# ):
+#     wallet_address = wallet_signature_login.wallet_address
+#     signature = wallet_signature_login.signature
+    
+#     original_message = get_sign_message(wallet_address)
+#     logging.debug(f"{original_message=}")
+#     logging.debug(f"{wallet_address=}")
+#     logging.debug(f"{signature=}")
+#     message_hash = encode_defunct(text=original_message)
+#     signer = w3.eth.account.recover_message(message_hash, signature=signature)
+#     logging.info(signer + " signed the message")
+
+#     if signer == wallet_address:
+#         user: User = await get_one_object_by_filter(db, User, wallet_address=wallet_address)
+#         if user:
+#             logging.info("[+] Found user " + user.wallet_address)
+#         else:
+#             user = User(
+#                 wallet_address=wallet_address,
+#                 created_at=int(time.time()),
+#                 updated_at=int(time.time())
+#             )
+#             db.add(user)
+#             await db.commit()
+#             await db.refresh(user)
+#     else:
+#         raise HTTPException(status_code=401, detail='could not authenticate signature')
+
+#     access_token = create_access_token(
+#         data={"sub": str(user.user_id)},
+#         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+#     )
+    
+#     res = {"access_token": access_token, "token_type": "Bearer"}
+#     return res
     

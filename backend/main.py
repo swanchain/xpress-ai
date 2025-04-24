@@ -6,7 +6,7 @@ import logging.config
 from app.database.session import engine, create_tables
 from config import settings, logging_config
 
-from app.api import users
+from app.api import users, analyze
 
 logging.config.dictConfig(logging_config)
 logger = logging.getLogger()
@@ -40,3 +40,4 @@ async def root():
     return {"message": "Welcome to XPressAI API"}
 
 app.include_router(users.router)
+app.include_router(analyze.router)

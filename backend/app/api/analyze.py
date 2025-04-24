@@ -30,6 +30,13 @@ from app.schemas.user import (
     WalletSignatureLogin
 )
 from app.models.user import User
+from app.services.api_service import (
+    get_futurecitizen_bearer_token,
+    get_x_task_reply,
+    get_ai_role_id,
+    get_x_tweet_id,
+    get_x_tweet_content
+)
 
 
 router = APIRouter(prefix="/ai", tags=["AI Analyze"])
@@ -37,7 +44,7 @@ router = APIRouter(prefix="/ai", tags=["AI Analyze"])
 logger = logging.getLogger()
 
 @router.post("/generate-tweet", response_model=dict)
-async def analyze(
+async def generate_tweet(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -65,6 +72,18 @@ async def analyze(
         "data": "under construction..."
     }
 
+@router.post("/get-tweet-content", response_model=dict)
+async def get_tweet_content(
+    tweet_url: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    content = get_x_tweet_content(tweet_url)
+    return {
+        "status": "Get tweet content successfully",
+        "tweet_content": content
+    }
+    
 
 @router.post("/generate-tweet-reply", response_model=dict)
 async def analyze(
@@ -73,25 +92,16 @@ async def analyze(
     db: AsyncSession = Depends(get_db),
 ):
     x_username = user.x_screen_name
+    ai_role_id = user.ai_role_id
 
-    # if not x_username:
-    #     raise HTTPException(
-    #         status_code=400, 
-    #         detail="Invalid x_username"
-    #     )
-    
-    # x_history_content = get_x_history_content(x_username)
+    tweet_id = await get_x_tweet_id(tweet_url)
 
-    # if not x_history_content:
-    #     raise HTTPException(
-    #         status_code=400, 
-    #         detail="Invalid x_history_content"
-    #     )
-    
-    # # call Futurecitizen API
-    # futurecitizen_result = call_futurecitizen(x_history_content)
+    reply_content = await get_x_task_reply(
+        tweet_id,
+        ai_role_id
+    )
 
     return {
-        "status": "success",
-        "data": "under construction..."
+        "status": "Get reply content successfully",
+        "reply_content": reply_content
     }

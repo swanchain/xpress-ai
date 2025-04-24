@@ -113,10 +113,10 @@ async def get_ai_role_id(
 
 
 async def get_x_task_reply(
-    tweet_id: str
+    tweet_id: str,
+    ai_role_id: int
 ):
     futurecitizen_x_api = settings.FUTURECITIZEN_X_GENERATE_REPLY_API
-    futurecitizen_role_id = settings.FUTURECITIZEN_ROLE_ID
     futurecitizen_bear_token = await get_futurecitizen_bearer_token_async()
     
     async with httpx.AsyncClient() as client:
@@ -128,7 +128,7 @@ async def get_x_task_reply(
             },
             json={
                 "tweet_id": tweet_id,
-                "role_id": futurecitizen_role_id,
+                "role_id": ai_role_id,
                 "count": 1
             }
         )
