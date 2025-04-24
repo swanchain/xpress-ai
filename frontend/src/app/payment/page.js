@@ -69,17 +69,19 @@ export default function Payment() {
             </p>
           </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl text-lg hover:bg-blue-700 transition disabled:opacity-50"
-          >
-            {isConnected
-              ? isSubmitting
-                ? 'Submitting...'
-                : 'Submit Payment'
-              : 'Connect Wallet'}
-          </button>
+          {isConnected ? (
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 text-white py-3 rounded-xl text-lg hover:bg-blue-700 transition disabled:opacity-50"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Payment'}
+            </button>
+          ) : (
+            <div className="flex justify-center">
+              <w3m-connect-button />
+            </div>
+          )}
         </div>
       </main>
     </>

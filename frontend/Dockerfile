@@ -6,7 +6,6 @@ RUN apk add --no-cache libc6-compat git
 WORKDIR /app
 
 COPY package*.json ./
-COPY tsconfig.json ./
 
 RUN npm install
 
