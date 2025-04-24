@@ -24,13 +24,13 @@ from app.auth.auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 from config import settings
-from constants import OAUTH_AUTHORIZE
+from constants import *
 from app.database.session import get_db, get_one_object_by_filter
 from app.schemas.user import (
     WalletSignatureLogin
 )
 from app.models.user import User
-
+from app.auth.auth import oauth_request_token, oauth_user_verification, decode_oauth_response
 
 router = APIRouter(prefix="/user", tags=["authentication"])
 
@@ -92,3 +92,82 @@ async def login_directly_by_wallet(
     res = {"access_token": access_token, "token_type": "Bearer"}
     return res
     
+
+@router.get("/x_oauth_login", response_model=dict)
+async def x_oauth_login():
+    try:
+        oauth_response = oauth_request_token()
+        oauth_status, oauth_response_data = decode_oauth_response(oauth_response)
+        
+        if oauth_status:
+            oauth_token = oauth_response_data['oauth_token']
+            oauth_token_secret = oauth_response_data['oauth_token_secret']
+            
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "message": "OAuth token generated successfully. (Expires in 5 minutes)",
+                    "data": {
+                        "oauth_token": oauth_token,
+                        "oauth_token_secret": oauth_token_secret,
+                        "authorized_url": f"{OAUTH_AUTHORIZE}?oauth_token={oauth_token}"
+                    }
+                }
+            )
+        else:
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "message": "OAuth token generation failed."
+                }
+            )
+    except Exception as e:
+        logging.error(f"OAuth Login Failed: {str(e)}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Internal server error.")
+
+
+@router.post("/connect_x_account")
+async def connect_x_account(
+    oauth_token: str = Form(...), 
+    oauth_verifier: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    oauth_response = oauth_user_verification(
+        oauth_token=oauth_token, 
+        oauth_verifier=oauth_verifier
+    )
+    oauth_status, oauth_response_data = decode_oauth_response(oauth_response)
+    
+    if not oauth_status:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OAuth token expired."
+        )
+    
+    x_user_id = int(oauth_response_data['user_id'])
+    x_screen_name = oauth_response_data['screen_name']
+
+    user: User = await get_one_object_by_filter(db, User, x_user_id=x_user_id)
+    if user:
+        logging.info("[+] Found user " + user.wallet_address)
+        user.x_user_id = x_user_id
+        user.x_screen_name = x_screen_name
+    else:
+        user = User(
+            x_user_id=x_user_id,
+            x_screen_name=x_screen_name,
+            created_at=int(time.time()),
+            updated_at=int(time.time())
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            'status': 'success',
+            'message': 'Connect X account successfully.'
+        }
+    )
+ 

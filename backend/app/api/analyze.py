@@ -41,7 +41,7 @@ async def analyze(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    x_username = user.x_username
+    x_username = user.x_screen_name
 
     # if not x_username:
     #     raise HTTPException(
@@ -72,7 +72,7 @@ async def analyze(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    x_username = user.x_username
+    x_username = user.x_screen_name
 
     # if not x_username:
     #     raise HTTPException(
