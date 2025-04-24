@@ -92,7 +92,7 @@ async def analyze(
     db: AsyncSession = Depends(get_db),
 ):
     x_username = user.x_screen_name
-    ai_role_id = user.ai_role_id
+    ai_role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
 
     tweet_id = await get_x_tweet_id(tweet_url)
 

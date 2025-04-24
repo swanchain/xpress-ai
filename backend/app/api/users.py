@@ -110,7 +110,15 @@ async def login_x_account(
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     
-    res = {"access_token": access_token, "token_type": "Bearer"}
+    res = {
+        "access_token": access_token, 
+        "token_type": "Bearer",
+        "user": {
+            # "x_user_id": user.x_user_id,
+            "x_screen_name": user.x_screen_name,
+            "ai_role_id": user.ai_role_id
+        }
+    }
     return res
 
 
