@@ -16,3 +16,4 @@ class User(Base):
     credit = mapped_column(DECIMAL(10, 2), nullable=False, default=0.00)
     created_at = mapped_column(BigInteger, nullable=False)
     updated_at = mapped_column(BigInteger, nullable=False)
+    
