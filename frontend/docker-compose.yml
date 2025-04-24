@@ -7,6 +7,4 @@ services:
       dockerfile: Dockerfile
     ports:
       - "9001:3000"
-    volumes:
-      - .:/app
     command: "npm start"
