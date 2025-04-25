@@ -21,9 +21,15 @@
       },
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "userId",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "uuid",
+        "type": "string"
       },
       {
         "indexed": false,
@@ -82,9 +88,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "uuid",
+        "type": "string"
       }
     ],
     "name": "getTotalCredits",
@@ -101,28 +107,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "idToCredits",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "userId",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "uuid",
+        "type": "string"
       },
       {
         "internalType": "uint256",
@@ -133,6 +120,25 @@
     "name": "purchaseTweets",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "uuidToCredits",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
