@@ -75,7 +75,6 @@ async def generate_tweet(
         )
     
     # update user credit
-    user.credit = max(user.credit - 1, 0)
     user.total_generated = user.total_generated + 1
     user.updated_at = int(time.time())
     db.add(user)
@@ -136,7 +135,6 @@ async def analyze(
         )
     
     # update user credit
-    user.credit = max(user.credit - 1, 0)
     user.total_generated = user.total_generated + 1
     user.updated_at = int(time.time())
     db.add(user)
