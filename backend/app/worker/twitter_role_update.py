@@ -2,20 +2,22 @@ import tweepy
 import dotenv
 import os
 import logging
-from typing import Optional, List, Dict, Any
-from sqlalchemy import create_engine, select, update
-from sqlalchemy.orm import Session
+from typing import Optional, List
 from ..models.user import User
-from ..database.session import get_engine
 from tweepy.errors import TooManyRequests
 import httpx
 import json
 
 logger = logging.getLogger(__name__)
 
-async def get_user_tweets(client: tweepy.Client, user_id: int) -> str:
+async def get_user_tweets(client: tweepy.Client, user_id: int) -> Optional[List[tweepy.Tweet]]:
     """
     Get user's tweets
+    Args:
+        client: Tweepy client instance
+        user_id: Twitter user ID
+    Returns:
+        Optional[List[tweepy.Tweet]]: List of tweets or None if no tweets found
     """
     tweets = client.get_users_tweets(
         id=user_id,
@@ -30,9 +32,13 @@ async def get_user_tweets(client: tweepy.Client, user_id: int) -> str:
         
     return tweets.data
 
-async def analyze_tweets_with_llm(tweets: str) -> str:
+async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
     """
     Call LLM to analyze user's tweets
+    Args:
+        tweets: List of Tweet objects to analyze
+    Returns:
+        str: LLM analysis result
     """
     # Convert tweets to string format
     tweets_content = "\n".join([tweet.text for tweet in tweets])
@@ -161,13 +167,15 @@ async def process_single_user(client: tweepy.Client, user: User) -> None:
     # 4. Update user's role_id
     await update_user_role(user, role_id)
 
-async def update_user_role_task():
+async def update_user_role_task() -> None:
     """
     Main task: Update user roles
+    Returns:
+        None
     """
     try:
         dotenv.load_dotenv()
-        client = tweepy.Client(bearer_token=os.environ['BEARER_TOKEN'])
+        client = tweepy.Client(bearer_token=os.environ['X_BEARER_TOKEN'])
         
         users_to_update = User.get_empty_ai_role_id_user_list()
         if not users_to_update:
@@ -193,3 +201,55 @@ async def update_user_role_task():
     except Exception as e:
         logger.error(f"Error in update_user_role_task: {str(e)}")
         raise 
+
+class MockUser:
+    """Mock User class for testing"""
+    def __init__(self, id=1, x_user_id="44196397", x_screen_name="elonmusk"):
+        self.id = id
+        self.x_user_id = x_user_id
+        self.x_screen_name = x_screen_name
+
+    def update_user_role_by_user_id(self, user_id, role_id):
+        print(f"Mock: Updated user {user_id} with role_id {role_id}")
+
+    @staticmethod
+    def get_empty_ai_role_id_user_list():
+        return [MockUser()]
+
+async def run_test():
+    """Test function to verify the twitter role update functionality"""
+    try:
+        # Load environment variables
+        dotenv.load_dotenv()
+        
+        # Verify required environment variables
+        required_env_vars = ['X_BEARER_TOKEN', 'NEBULA_API_KEY', 'FUTURECITIZEN_API_KEY']
+        missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
+        if missing_vars:
+            print(f"Error: Missing required environment variables: {', '.join(missing_vars)}")
+            return
+
+        print("Starting test of twitter_role_update.py...")
+        
+        # Initialize Tweepy client
+        client = tweepy.Client(bearer_token=os.environ['X_BEARER_TOKEN'])
+        
+        # Create a mock user
+        test_user = MockUser()
+        print(f"Testing with mock user: ID={test_user.id}, Twitter ID={test_user.x_user_id}")
+        
+        # Test the complete process
+        try:
+            await process_single_user(client, test_user)
+            print("Test completed successfully!")
+        except Exception as e:
+            print(f"Error during test: {str(e)}")
+            raise
+
+    except Exception as e:
+        print(f"Test failed with error: {str(e)}")
+        raise
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(run_test()) 
