@@ -1,3 +1,4 @@
+from backend.app.worker.twitter_role_update import update_user_role_task
 from fastapi import FastAPI
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +10,7 @@ from app.database.session import engine, create_tables
 from config import settings, logging_config
 
 from app.api import users, analyze
-from app.worker.heartbeat import heartbeat_worker
+
 
 logging.config.dictConfig(logging_config)
 logger = logging.getLogger()
@@ -18,7 +19,7 @@ logger = logging.getLogger()
 scheduler = BackgroundScheduler()
 
 scheduler.add_job(
-    heartbeat_worker, 
+    update_user_role_task, 
     "interval", 
     seconds=60,
     max_instances=1,
