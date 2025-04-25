@@ -79,7 +79,7 @@ export default function useConnectX() {
         console.error('Error verifying X connection:', error)
       }
     } finally {
-      //   router.push('/account?socials=true&') // Redirect after successful connection
+      router.push('/') // Redirect after successful connection
       setConnectLoad(false)
     }
   }
