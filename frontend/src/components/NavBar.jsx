@@ -53,7 +53,8 @@ export default function Navbar({
               onClick={() => setShowModal(true)}
             >
               <span className="flex flex-row justify-center items-center gap-x-2">
-                <CoinIcon /> <span className="ml-2">5 Credits</span>
+                <CoinIcon />{" "}
+                <span className="ml-2">{Math.floor(user.credit)} Credits</span>
               </span>
             </button>
           )}

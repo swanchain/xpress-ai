@@ -18,10 +18,10 @@ function ReplyTweet() {
   return (
     <div className="min-w-3/4 mx-auto bg-white rounded-2xl border-gray-200 border-1">
       <form>
-        <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-6 border-gray-200">
+        <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
           Generate Reply
         </h2>
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-8">
           <div>
             <label className=" font-medium mb-2 flex" htmlFor="topic">
               Tweet to Reply To
@@ -71,7 +71,7 @@ function ReplyTweet() {
             />
           </div>
 
-          <div className="flex justify-between pt-4">
+          <div className="flex justify-between">
             <button onClick={handleGenerate} className="black-btn">
               Generate Tweet
             </button>
@@ -102,10 +102,10 @@ function CreateTweet() {
   return (
     <div className="min-w-3/4 mx-auto bg-white rounded-2xl border-gray-200 border-1">
       <form>
-        <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-6 border-gray-200">
+        <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
           Create New Tweet
         </h2>
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-8">
           <div>
             <label className=" font-medium mb-2 flex" htmlFor="topic">
               Topic
@@ -155,7 +155,7 @@ function CreateTweet() {
             />
           </div>
 
-          <div className="flex justify-between pt-4">
+          <div className="flex justify-between ">
             <button onClick={handleGenerate} className="black-btn">
               Generate Tweet
             </button>
