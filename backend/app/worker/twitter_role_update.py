@@ -239,6 +239,12 @@ async def update_user_role_task() -> None:
         logger.error(f"Error in update_user_role_task: {str(e)}")
         raise
 
+
+
+# ===================
+#      TEST
+# ===================
+
 # Mock User class for testing purposes
 class MockUser:
     """Mock User class for testing"""

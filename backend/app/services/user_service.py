@@ -3,7 +3,13 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.database.session import get_all_objects_by_filter
+from app.services.api_service import get_futurecitizen_bearer_token_async
 import tweepy
+import httpx
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Add mock tweets for testing
 class MockTweet:
@@ -114,3 +120,35 @@ class UserService:
             return None
             
         return tweets.data
+    
+    async def get_user_role_details(self, user_id: int) -> Optional[dict]:
+        """Get user's role details"""
+        user = await self.get_user_by_id(user_id)
+        if not user or not user.ai_role_id:
+            return None
+            
+        try:
+            # Get bearer token
+            bearer_token = await get_futurecitizen_bearer_token_async()
+            
+            # Make API call to get role details
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    os.environ['FUTURECITIZEN_GET_USER_ROLE_DETAIL'] + f"/{user.ai_role_id}",
+                    headers={
+                        "accept": "application/json",
+                        "Authorization": f"Bearer {bearer_token}"
+                    }
+                )
+                
+                if response.status_code != 200:
+                    logger.error(f"Failed to get role details: {response.text}")
+                    return None
+                    
+                return response.json()
+                
+        except Exception as e:
+            logger.error(f"Error getting role details: {str(e)}")
+            return None
+            
+            
