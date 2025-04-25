@@ -3,8 +3,30 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.database.session import get_all_objects_by_filter
+import tweepy
 
+# Add mock tweets for testing
+class MockTweet:
+    """Mock Tweet class for testing"""
+    def __init__(self, text, created_at=None):
+        self.text = text
+        self.created_at = created_at
+
+MOCK_TWEETS_DATA = [
+    MockTweet("@MarioNawfal $1.5B spent every year!? Wow, that makes my political contributions last year small by comparison."),
+    MockTweet("RT @_jaybaxter_: The reason posts with links sometimes get lower reach is not because they are explicitly downranked by any evil rule or lo…"),
+    MockTweet("@SERobinsonJr @_jaybaxter_ That does need some love"),
+    MockTweet("@SawyerMerritt Uh oh 😬 Inverse Cramer is tough karma to overcome!"),
+    MockTweet("I'm calling weekend reviews with Autopilot to accelerate progress."),
+    MockTweet("@nataliegwinters 💯"),
+    MockTweet("RT @SawyerMerritt: NEWS: Tesla reportedly has 300 test operators driving around Austin, Texas to prepare for their big June robotaxi launch…"),
+    MockTweet("@SawyerMerritt Waymo needs \"way mo\" money to succeed 😂"),
+    MockTweet("@MarioNawfal Cool"),
+    MockTweet("Good move. There are thousands of committees that take up a lot of time without clear accomplishments. A reset was needed."),
+    MockTweet("To be clear, there is no explicit rule limiting the reach of links in posts. The algorithm tries (not always successfully) to maximize user-seconds on 𝕏, so a link that causes people to cut short their time here will naturally get less exposure.")
+]
 class UserService:
+    
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -67,3 +89,28 @@ class UserService:
             await self.db.commit()
             return True
         return False 
+    
+    async def get_user_tweets(self, client: tweepy.Client, user_id: int, max_results: int = 10, use_mock: bool = False) -> Optional[List[tweepy.Tweet]]:
+        """
+        Get user's tweets
+        Args:
+            client: Tweepy client instance
+            user_id: Twitter user ID
+            use_mock: Whether to use mock data (for testing)
+        Returns:
+            Optional[List[tweepy.Tweet]]: List of tweets or None if no tweets found
+        """
+        if use_mock:
+            return MOCK_TWEETS_DATA
+
+        tweets = client.get_users_tweets(
+            id=user_id,
+            max_results=max_results,
+            tweet_fields=["created_at", "public_metrics", "text", "entities", "id", "referenced_tweets"],
+            expansions=["referenced_tweets.id", "referenced_tweets.id.author_id"]
+        )
+        
+        if not tweets.data:
+            return None
+            
+        return tweets.data
