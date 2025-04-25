@@ -232,7 +232,7 @@ async def update_user_role_task() -> None:
                 return
 
             client = tweepy.Client(
-                bearer_token=os.environ.get("TWITTER_BEARER_TOKEN"),
+                bearer_token=os.environ.get("X_BEARER_TOKEN"),
                 wait_on_rate_limit=True
             )
 
