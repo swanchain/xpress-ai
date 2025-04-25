@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 import httpx
 import time
 import secrets
+import uuid
 import time
 import traceback
 from datetime import timedelta, datetime, timezone
@@ -96,6 +97,7 @@ async def login_x_account(
         logging.info("[+] Found user " + user.x_screen_name)
     else:
         user = User(
+            uuid=str(uuid.uuid4()),
             x_user_id=x_user_id,
             x_screen_name=x_screen_name,
             created_at=int(time.time()),
@@ -113,12 +115,7 @@ async def login_x_account(
     res = {
         "access_token": access_token, 
         "token_type": "Bearer",
-        "user": {
-            # "x_user_id": user.x_user_id,
-            "x_screen_name": user.x_screen_name,
-            "ai_role_id": user.ai_role_id,
-            "credit": user.credit
-        }
+        "user": user.to_dict()
     }
     return res
 
