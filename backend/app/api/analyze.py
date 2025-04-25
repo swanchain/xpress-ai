@@ -101,7 +101,21 @@ async def analyze(
         ai_role_id
     )
 
+    if not reply_content:
+        raise HTTPException(
+            status_code=400, 
+            detail="Invalid reply_content"
+        )
+    
+    # update user credit
+    user.credit = max(user.credit - 1, 0)
+    user.total_generated = user.total_generated + 1
+    user.updated_at = int(time.time())
+    db.add(user)
+    await db.commit()
+
     return {
         "status": "Get reply content successfully",
-        "reply_content": reply_content
+        "reply_content": reply_content,
+        "user": user.to_dict()
     }

@@ -14,19 +14,21 @@ class User(Base):
     x_user_id = mapped_column(BigInteger, unique=True, nullable=True)
     x_screen_name = mapped_column(String(255), unique=True, nullable=True)
     ai_role_id = mapped_column(Integer, nullable=True)
-    credit = mapped_column(DECIMAL(10, 2), nullable=False, default=0.00)
-    total_generated = mapped_column(DECIMAL(10, 2), nullable=False, default=0.00)
+    credit = mapped_column(Integer, nullable=False, default=5)
+    total_generated = mapped_column(Integer, nullable=False, default=0)
     created_at = mapped_column(BigInteger, nullable=False)
     updated_at = mapped_column(BigInteger, nullable=False)
 
     def to_dict(self):
         return {
-            "id": self.id,
+            # "id": self.id,
+            "uuid": self.uuid,
             # "wallet_address": self.wallet_address,
             # "x_user_id": self.x_user_id,
             "x_screen_name": self.x_screen_name,
             # "ai_role_id": self.ai_role_id,
-            "credit": self.credit,
+            "free_credit_left": self.credit,
+            "total_generated": self.total_generated,
             # "created_at": self.created_at,
             # "updated_at": self.updated_at,
         }
