@@ -53,8 +53,8 @@ export default function Home() {
         ethersProvider,
       )
 
-      const totalCredits = await contract.getTotalCredits(user.id)
-      setAvailableCredits(Number(totalCredits) - Math.floor(user.credit))
+      const totalCredits = await contract.getTotalCredits(user.uuid)
+      setAvailableCredits(Number(totalCredits) + 5 - user.total_generated)
     }
 
     if (user) {
@@ -74,7 +74,7 @@ export default function Home() {
 
       const price = await contract.getCreditPrice(numTweets)
 
-      const data = await contract.purchaseTweets(user.id, numTweets, {
+      const data = await contract.purchaseTweets(user.uuid, numTweets, {
         value: price,
       })
       console.log('data: ', data)
@@ -112,7 +112,14 @@ export default function Home() {
 
         {/* Main Content */}
         <main className="flex-grow flex flex-col items-center justify-center px-4 text-center gap-5 z-30">
-          {user ? <TweetPage selectedTab={selectedTab} /> : <LandingPage />}
+          {user ? (
+            <TweetPage
+              selectedTab={selectedTab}
+              availableCredits={availableCredits}
+            />
+          ) : (
+            <LandingPage />
+          )}
         </main>
       </div>
       {/* purchase modal */}(
