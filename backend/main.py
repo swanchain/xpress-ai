@@ -1,11 +1,12 @@
-from backend.app.worker.twitter_role_update import update_user_role_task
+from app.worker.twitter_role_update import update_user_role_task
 from fastapi import FastAPI
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 import logging.config
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import asyncio
 from app.database.session import engine, create_tables
 from config import settings, logging_config
 
@@ -16,7 +17,7 @@ logging.config.dictConfig(logging_config)
 logger = logging.getLogger()
 
 
-scheduler = BackgroundScheduler()
+scheduler = AsyncIOScheduler()
 
 scheduler.add_job(
     update_user_role_task, 

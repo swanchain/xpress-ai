@@ -13,6 +13,8 @@ import dotenv
 import logging
 from typing import Optional, List
 from app.models.user import User
+from app.services.user_service import UserService
+from app.database.session import AsyncSessionLocal
 from tweepy.errors import TooManyRequests
 import httpx
 import json
@@ -188,11 +190,11 @@ async def create_future_citizen_role(user: User, user_data: str) -> str:
         logger.error(f"Error in create_future_citizen_role: {str(e)}")
         raise
 
-async def update_user_role(user: User, role_id: str) -> None:
+async def update_user_role(user: User, role_id: str, user_service: UserService) -> None:
     """
     Update user's role_id
     """
-    user.update_user_role_by_user_id(user.id, role_id)
+    await user_service.update_user_role_by_user_id(user.id, role_id)
 
 async def process_single_user(client: tweepy.Client, user: User, use_mock: bool = False) -> None:
     """
@@ -214,32 +216,42 @@ async def process_single_user(client: tweepy.Client, user: User, use_mock: bool 
 
 async def update_user_role_task() -> None:
     """
-    Main task: Update user roles
-    Returns:
-        None
+    Main task to update user roles
     """
     try:
-        dotenv.load_dotenv()
-        client = tweepy.Client(bearer_token=os.environ['X_BEARER_TOKEN'])
-        
-        users_to_update = User.get_empty_ai_role_id_user_list()
-        if not users_to_update:
-            return
-        
-        for user in users_to_update:
-            if not user.x_user_id:
-                logger.warning(f"User {user.id} has no Twitter ID")
-                continue
-                
-            try:
-                await process_single_user(client, user)
-            except TooManyRequests:
-                logger.warning("Twitter API rate limit reached. Stopping processing until next scheduled run.")
-                return
-            except Exception as e:
-                logger.error(f"Failed to process user {user.id}: {str(e)}")
-                continue
+        async with AsyncSessionLocal() as session:
+            user_service = UserService(session)
+            users_to_update = await user_service.get_empty_ai_role_id_user_list()
             
+            if not users_to_update:
+                logger.info("No users need role updates")
+                return
+
+            client = tweepy.Client(
+                bearer_token=os.environ.get("TWITTER_BEARER_TOKEN"),
+                wait_on_rate_limit=True
+            )
+
+            for user in users_to_update:
+                try:
+                    tweets = await get_user_tweets(client, user.x_user_id)
+                    if not tweets:
+                        logger.warning(f"No tweets found for user {user.x_screen_name}")
+                        continue
+
+                    user_data = await analyze_tweets_with_llm(tweets)
+                    role_id = await create_future_citizen_role(user, user_data)
+                    await update_user_role(user, role_id, user_service)
+                    
+                    logger.info(f"Successfully updated role for user {user.x_screen_name}")
+                
+                except TooManyRequests:
+                    logger.error("Twitter API rate limit exceeded")
+                    break
+                except Exception as e:
+                    logger.error(f"Error processing user {user.x_screen_name}: {str(e)}")
+                    continue
+
     except Exception as e:
         logger.error(f"Error in update_user_role_task: {str(e)}")
         raise

@@ -66,4 +66,4 @@ class UserService:
             await self.db.delete(user)
             await self.db.commit()
             return True
-        return False
+        return False 
