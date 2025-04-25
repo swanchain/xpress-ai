@@ -37,7 +37,7 @@ from app.models.user import User
 from app.services.user_service import UserService
 from app.auth.auth import oauth_request_token, oauth_user_verification, decode_oauth_response
 
-router = APIRouter(prefix="/user", tags=["authentication"])
+router = APIRouter(prefix="/user", tags=["User"])
 
 logger = logging.getLogger()
 
