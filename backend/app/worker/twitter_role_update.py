@@ -14,6 +14,7 @@ import logging
 from typing import Optional, List
 from app.models.user import User
 from app.services.user_service import UserService
+from app.services.api_service import get_futurecitizen_bearer_token_async
 from app.database.session import AsyncSessionLocal
 from tweepy.errors import TooManyRequests
 import httpx
@@ -84,7 +85,7 @@ async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
-            "https://inference.nebulablock.com/v1/chat/completions",
+            os.environ['NEBULA_GENERATE_ROLE_API'],
             json=payload,
             headers={
                 "Content-Type": "application/json",
@@ -153,6 +154,9 @@ async def create_future_citizen_role(user: User, user_data: str) -> str:
                     pass
                 return default_value
 
+        # Get bearer token through login
+        bearer_token = await get_futurecitizen_bearer_token_async()
+
         # Prepare the payload
         payload = {
             "name": f"{user.x_screen_name}-{user.x_user_id}",
@@ -170,11 +174,11 @@ async def create_future_citizen_role(user: User, user_data: str) -> str:
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                "https://api.futurecitizen.ai/api/v1/ai-roles",
+                os.environ['FUTURECITIZEN_CREATE_ROLE_API'],
                 json=payload,
                 headers={
                     "Content-Type": "application/json",
-                    "Authorization": f"Bearer {os.environ['FUTURECITIZEN_API_KEY']}",
+                    "Authorization": f"Bearer {bearer_token}",
                     "accept": "application/json, text/plain, */*"
                 }
             )
