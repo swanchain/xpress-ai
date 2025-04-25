@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     FUTURECITIZEN_LOGIN_PSWD: str
     FUTURECITIZEN_ROLE_ID: int
 
+    RPC: str
+    CONTRACT_ADDRESS: str
+
     
     class Config:
         env_file = ".env"

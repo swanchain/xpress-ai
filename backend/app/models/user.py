@@ -22,14 +22,10 @@ class User(Base):
 
     def to_dict(self):
         return {
-            # "id": self.id,
             "uuid": self.uuid,
-            # "wallet_address": self.wallet_address,
-            # "x_user_id": self.x_user_id,
             "x_screen_name": self.x_screen_name,
-            # "ai_role_id": self.ai_role_id,
-            "free_credit_left": self.credit,
+            "free_credit": self.credit,
+            "free_credit_left": max(0, self.credit - self.total_generated),
             "total_generated": self.total_generated,
-            # "created_at": self.created_at,
-            # "updated_at": self.updated_at,
         }
+    

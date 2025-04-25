@@ -40,6 +40,7 @@ from app.services.api_service import (
     get_x_tweet_id,
     get_x_tweet_content
 )
+from app.services.credit_service import check_credits_enough
 
 
 router = APIRouter(prefix="/ai", tags=["AI Analyze"])
@@ -51,6 +52,12 @@ async def generate_tweet(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if not check_credits_enough(user):
+        raise HTTPException(
+            status_code=400, 
+            detail="Not enough credits"
+        )
+    
     x_username = user.x_screen_name
     ai_role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
 
@@ -75,7 +82,6 @@ async def generate_tweet(
         )
     
     # update user credit
-    user.credit = max(user.credit - 1, 0)
     user.total_generated = user.total_generated + 1
     user.updated_at = int(time.time())
     db.add(user)
@@ -119,6 +125,12 @@ async def analyze(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if not check_credits_enough(user):
+        raise HTTPException(
+            status_code=400, 
+            detail="Not enough credits"
+        )
+    
     x_username = user.x_screen_name
     ai_role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
 
@@ -136,7 +148,6 @@ async def analyze(
         )
     
     # update user credit
-    user.credit = max(user.credit - 1, 0)
     user.total_generated = user.total_generated + 1
     user.updated_at = int(time.time())
     db.add(user)
