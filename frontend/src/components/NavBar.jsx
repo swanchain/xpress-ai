@@ -2,6 +2,7 @@
 import useConnectX from "@/hooks/useConnectX";
 import TwitterIcon from "./TwitterIcon";
 import CoinIcon from "./CoinIcon";
+import { useDisconnect } from "@reown/appkit/react";
 
 export default function Navbar({
   user,
@@ -9,12 +10,15 @@ export default function Navbar({
   selectedTab,
   setSelectedTab,
   setShowModal,
+  availableCredits,
 }) {
   const { connectX } = useConnectX();
+  const { disconnect } = useDisconnect();
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
     localStorage.removeItem("xpress_access_token");
+    await disconnect();
     window.location.reload();
   };
 
@@ -32,7 +36,8 @@ export default function Navbar({
                 selectedTab == "create" ? "bg-white" : "hover:bg-black/5"
               }`}
             >
-              Create Tweet
+              <span className="hidden sm:block">Create Tweet</span>
+              <span className="sm:hidden">Tweet</span>
             </button>
             <button
               onClick={() => setSelectedTab("reply")}
@@ -40,7 +45,8 @@ export default function Navbar({
                 selectedTab == "reply" ? "bg-white" : "hover:bg-black/5"
               }`}
             >
-              Generate Reply
+              <span className="hidden sm:block">Generate Reply</span>
+              <span className="sm:hidden">Reply</span>
             </button>
           </nav>
         ) : (
@@ -52,18 +58,23 @@ export default function Navbar({
               className="black-btn text-base"
               onClick={() => setShowModal(true)}
             >
-              <span className="flex flex-row justify-center items-center gap-x-2">
+              <span className="sm:flex flex-row justify-center items-center gap-x-2 hidden">
                 <CoinIcon />{" "}
-                <span className="ml-2">{Math.floor(user.credit)} Credits</span>
+                <span className="ml-2">{availableCredits} Credits</span>
+              </span>
+              <span className="flex flex-row justify-center items-center sm:hidden">
+                <CoinIcon /> <span className="ml-2">{availableCredits}</span>
               </span>
             </button>
           )}
           {user && (
-            <div className="px-2 font-semibold">{user.x_screen_name}</div>
+            <div className="hidden sm:block px-2 font-semibold">
+              {user.x_screen_name}
+            </div>
           )}
           {user ? (
             <button
-              className=" px-6 py-3 rounded-[12px] font-semibold hover:cursor-pointer text-base bg-white border-1 border-solid border-black text-black outline-black-1 hover:text-white hover:bg-black transition ease-in-out duration-300"
+              className="sm:px-6 sm:py-3 p-2 rounded-[12px] font-semibold hover:cursor-pointer text-base bg-white border-1 border-solid border-black text-black outline-black-1 hover:text-white hover:bg-black transition ease-in-out duration-300"
               onClick={logout}
             >
               <span className="flex flex-row justify-center items-center gap-x-2">
@@ -77,9 +88,9 @@ export default function Navbar({
               </span>
             </button>
           )}
-          <button className="border border-dark text-dark px-4 py-2 rounded-xl font-medium hidden">
+          {/* <button className="border border-dark text-dark px-4 py-2 rounded-xl font-medium hidden">
             Logout
-          </button>
+          </button> */}
         </div>
       </div>
     </nav>

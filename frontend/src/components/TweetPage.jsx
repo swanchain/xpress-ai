@@ -30,7 +30,7 @@ function ReplyTweet() {
               id="topic"
               type="text"
               placeholder="Paste Tweet URL..."
-              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-0 p-3 bg-gray-100"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-200 p-3 bg-gray-100"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
             />
@@ -42,7 +42,7 @@ function ReplyTweet() {
             </label>
             <select
               id="stance"
-              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-0 p-3 bg-gray-100"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-200 p-3 bg-gray-100"
               value={stance}
               onChange={(e) => setStance(e.target.value)}
             >
@@ -64,7 +64,7 @@ function ReplyTweet() {
             <textarea
               id="requirements"
               rows={3}
-              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-0 p-3 bg-gray-100"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-200 p-3 bg-gray-100"
               placeholder=""
               value={requirements}
               onChange={(e) => setRequirements(e.target.value)}
@@ -114,7 +114,7 @@ function CreateTweet() {
               id="topic"
               type="text"
               placeholder="What would you like to tweet about?"
-              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-0 p-3 bg-gray-100"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
             />
@@ -126,7 +126,7 @@ function CreateTweet() {
             </label>
             <select
               id="stance"
-              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-0 p-3 bg-gray-100"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
               value={stance}
               onChange={(e) => setStance(e.target.value)}
             >
@@ -148,7 +148,7 @@ function CreateTweet() {
             <textarea
               id="requirements"
               rows={3}
-              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-0 p-3 bg-gray-100"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
               placeholder=""
               value={requirements}
               onChange={(e) => setRequirements(e.target.value)}

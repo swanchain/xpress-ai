@@ -29,7 +29,7 @@
     @apply text-xl font-normal text-[#6e6e73];
   }
   .black-btn {
-    @apply px-6 py-3 rounded-[12px] transition-all duration-300 ease-in-out bg-[#1d1d1f] border-none hover:bg-black hover:translate-y-[-2px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] text-white text-lg font-semibold hover:cursor-pointer;
+    @apply px-6 py-3 rounded-[12px] transition-all duration-300 ease-in-out bg-[#1d1d1f] border-none hover:bg-black hover:translate-y-[-2px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] text-white text-lg font-semibold hover:cursor-pointer disabled:bg-gray-300 disabled:transition-none disabled:hover:translate-0 disabled:hover:shadow-none disabled:cursor-not-allowed;
   }
 }
 /* 
