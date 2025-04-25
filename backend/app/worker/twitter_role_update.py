@@ -1,9 +1,17 @@
+import os
+import sys
+from pathlib import Path
+
+# Add the backend directory to Python path
+backend_dir = str(Path(__file__).resolve().parent.parent.parent)
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
 import tweepy
 import dotenv
-import os
 import logging
 from typing import Optional, List
-from ..models.user import User
+from app.models.user import User
 from tweepy.errors import TooManyRequests
 import httpx
 import json
@@ -42,6 +50,7 @@ async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
     """
     # Convert tweets to string format
     tweets_content = "\n".join([tweet.text for tweet in tweets])
+    logger.info(f"Analyzing {len(tweets)} tweets")
     
     # Prepare the API request payload
     payload = {
@@ -62,7 +71,8 @@ async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
         "stream": False
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        logger.info("Sending request to LLM API")
         response = await client.post(
             "https://inference.nebulablock.com/v1/chat/completions",
             json=payload,
@@ -73,10 +83,14 @@ async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
         )
         response.raise_for_status()
         result = response.json()
+        logger.info("Received response from LLM API")
         
         try:
-            return result["choices"][0]["message"]["content"]
+            content = result["choices"][0]["message"]["content"]
+            logger.info("Successfully extracted content from LLM response")
+            return content
         except (KeyError, IndexError) as e:
+            logger.error(f"Failed to extract content from LLM response: {str(e)}")
             raise ValueError("Unexpected API response format") from e
 
 async def create_future_citizen_role(user: User, user_data: str) -> str:
@@ -89,36 +103,56 @@ async def create_future_citizen_role(user: User, user_data: str) -> str:
         str: The created role ID
     """
     try:
-        # Parse the required fields from user_data
-        data_dict = {
-            'Category': '',
-            'System Prompt': '',
-            'Personality Traits': '{"traits": []}',
-            'Background Story': '',
-            'Instruction Set': '{"instructions": []}',
-            'Knowledge Base': '{}',
-            'Example Conversations': '{}',
-            'Language': 'English'
-        }
+        # Parse the LLM response string into sections
+        sections = {}
+        current_key = None
+        current_value = []
         
-        # Extract values from user_data, using defaults if not found
-        for key in data_dict:
-            if key in user_data:
-                data_dict[key] = user_data[key]
+        for line in user_data.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check if line starts a new section
+            if ':' in line and ',' in line.split(':', 1)[0]:
+                if current_key and current_value:
+                    sections[current_key] = '\n'.join(current_value).strip()
+                current_key = line.split(',', 1)[0].strip()
+                current_value = [line.split(':', 1)[1].strip()]
+            else:
+                if current_key:
+                    current_value.append(line)
+        
+        # Add the last section
+        if current_key and current_value:
+            sections[current_key] = '\n'.join(current_value).strip()
 
         # Format data for API
+        try:
+            personality_traits = json.loads(sections.get('Personality Traits', '{"traits": []}'))
+            instruction_set = json.loads(sections.get('Instruction Set', '{"instructions": []}'))
+            knowledge_base = json.loads(sections.get('Knowledge Base', '{}'))
+            example_conversations = json.loads(sections.get('Example Conversations', '{}'))
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON from sections: {str(e)}")
+            # Provide default values if JSON parsing fails
+            personality_traits = {"traits": []}
+            instruction_set = {"instructions": []}
+            knowledge_base = {}
+            example_conversations = {}
+
         payload = {
             "name": f"{user.x_screen_name}-{user.x_user_id}",
             "model_name": "meta-llama/Llama-3.3-70B-Instruct",
-            "system_prompt": data_dict['System Prompt'],
-            "personality_traits": [json.dumps({"traits": json.loads(data_dict['Personality Traits'])["traits"]})],
-            "background_story": data_dict['Background Story'],
-            "instruction_set": [json.dumps({"instructions": json.loads(data_dict['Instruction Set'])["instructions"]})],
+            "system_prompt": sections.get('System Prompt', ''),
+            "personality_traits": [json.dumps({"traits": personality_traits.get("traits", [])})],
+            "background_story": sections.get('Background Story', ''),
+            "instruction_set": [json.dumps({"instructions": instruction_set.get("instructions", [])})],
             "version": "1.0",
-            "knowledge_base": json.loads(data_dict['Knowledge Base']),
-            "example_conversations": json.loads(data_dict['Example Conversations']),
-            "category": data_dict['Category'],
-            "language": data_dict['Language']
+            "knowledge_base": knowledge_base,
+            "example_conversations": example_conversations,
+            "category": sections.get('Category', ''),
+            "language": sections.get('Language', 'English')
         }
 
         async with httpx.AsyncClient() as client:
@@ -139,8 +173,9 @@ async def create_future_citizen_role(user: User, user_data: str) -> str:
             except KeyError as e:
                 raise ValueError("Role ID not found in API response") from e
 
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON format in user data: {str(e)}") from e
+    except Exception as e:
+        logger.error(f"Error in create_future_citizen_role: {str(e)}")
+        raise
 
 async def update_user_role(user: User, role_id: str) -> None:
     """

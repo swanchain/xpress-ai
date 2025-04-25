@@ -1,8 +1,8 @@
 from typing import List, Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..app.models.user import User
-from ..app.database.session import get_all_objects_by_filter
+from app.models.user import User
+from app.database.session import get_all_objects_by_filter
 
 class UserService:
     def __init__(self, db: AsyncSession):

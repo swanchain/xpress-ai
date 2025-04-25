@@ -19,14 +19,14 @@ PyJWT==2.10.1
 alembic==1.15.2
 
 # Twitter API
-tweepy==4.14.0
+tweepy==4.15.0
 
 # Web3py
 web3==6.19.0
 
 # OAuth
 requests==2.32.3
-requests-oauthlib>=2.0.0
+requests-oauthlib>=1.2.0,<2.0.0
 
 passlib[bcrypt]
 python-jose[cryptography]
