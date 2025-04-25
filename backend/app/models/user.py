@@ -26,6 +26,7 @@ class User(Base):
             "x_screen_name": self.x_screen_name,
             "free_credit": self.credit,
             "free_credit_left": max(0, self.credit - self.total_generated),
+            "ai_role_id": self.ai_role_id,
+            "free_credit_left": self.credit,
             "total_generated": self.total_generated,
         }
-    

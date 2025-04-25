@@ -1,4 +1,5 @@
 import logging
+import os
 from sqlalchemy.exc import IntegrityError
 import httpx
 import time
@@ -17,6 +18,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from web3.auto import w3
+import tweepy
+from tweepy.errors import TooManyRequests
 
 from app.auth.auth import get_current_user
 from app.auth.auth import (
@@ -31,6 +34,7 @@ from app.schemas.user import (
     WalletSignatureLogin
 )
 from app.models.user import User
+from app.services.user_service import UserService
 from app.auth.auth import oauth_request_token, oauth_user_verification, decode_oauth_response
 
 router = APIRouter(prefix="/user", tags=["authentication"])
@@ -129,6 +133,47 @@ async def generate_tweet(
         "status": "Get user successfully",
         "user": user.to_dict()
     }
+
+
+@router.post("/get-user-tweets-history")
+async def get_user_tweets_history(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        client = tweepy.Client(
+            bearer_token=os.environ.get("X_BEARER_TOKEN_FOR_API"),
+            wait_on_rate_limit=True
+        )
+        user_service = UserService(db)
+        tweets = await user_service.get_user_tweets(
+            client=client,
+            user_id=user.x_user_id,
+            max_results=5
+        )
+        
+        if not tweets:
+            return {
+                "status": "No tweets found",
+                "tweets": []
+            }
+            
+        return {
+            "status": "Get user tweets successfully",
+            "tweets": [{"text": tweet.text, "created_at": tweet.created_at} for tweet in tweets]
+        }
+        
+    except TooManyRequests:
+        raise HTTPException(
+            status_code=429,
+            detail="You are running out of credit or the system is busy, please try it again."
+        )
+    except Exception as e:
+        logging.error(f"Error getting user tweets: {str(e)}\n{traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail="You are running out of credit or the system is busy, please try it again."
+        )
 
 
 # @router.post("/get-wallet-sign-message")

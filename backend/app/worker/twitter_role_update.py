@@ -30,30 +30,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def get_user_tweets(client: tweepy.Client, user_id: int, use_mock: bool = False) -> Optional[List[tweepy.Tweet]]:
-    """
-    Get user's tweets
-    Args:
-        client: Tweepy client instance
-        user_id: Twitter user ID
-        use_mock: Whether to use mock data (for testing)
-    Returns:
-        Optional[List[tweepy.Tweet]]: List of tweets or None if no tweets found
-    """
-    if use_mock:
-        return MOCK_TWEETS_DATA
 
-    tweets = client.get_users_tweets(
-        id=user_id,
-        max_results=10,
-        tweet_fields=["created_at", "public_metrics", "text", "entities", "id", "referenced_tweets"],
-        expansions=["referenced_tweets.id", "referenced_tweets.id.author_id"]
-    )
-    
-    if not tweets.data:
-        return None
-        
-    return tweets.data
 
 async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
     """
@@ -204,19 +181,21 @@ async def process_single_user(client: tweepy.Client, user: User, use_mock: bool 
     """
     Process the complete process for a single user
     """
-    # 1. Get user's tweets
-    tweets = await get_user_tweets(client, user.x_user_id, use_mock)
-    if not tweets:
-        return
+    async with AsyncSessionLocal() as session:
+        user_service = UserService(session)
+        # 1. Get user's tweets
+        tweets = await user_service.get_user_tweets(client, user.x_user_id, use_mock=use_mock)
+        if not tweets:
+            return
+            
+        # 2. LLM analyze tweets
+        analysis_result = await analyze_tweets_with_llm(tweets)
         
-    # 2. LLM analyze tweets
-    analysis_result = await analyze_tweets_with_llm(tweets)
-    
-    # 3. Create FutureCitizen role
-    role_id = await create_future_citizen_role(user, analysis_result)
-    
-    # 4. Update user's role_id
-    await update_user_role(user, role_id)
+        # 3. Create FutureCitizen role
+        role_id = await create_future_citizen_role(user, analysis_result)
+        
+        # 4. Update user's role_id
+        await update_user_role(user, role_id, user_service)
 
 async def update_user_role_task() -> None:
     """
@@ -238,7 +217,7 @@ async def update_user_role_task() -> None:
 
             for user in users_to_update:
                 try:
-                    tweets = await get_user_tweets(client, user.x_user_id)
+                    tweets = await user_service.get_user_tweets(client, user.x_user_id)
                     if not tweets:
                         logger.warning(f"No tweets found for user {user.x_screen_name}")
                         continue
@@ -275,26 +254,7 @@ class MockUser:
     def get_empty_ai_role_id_user_list():
         return [MockUser()]
 
-# Add mock tweets for testing
-class MockTweet:
-    """Mock Tweet class for testing"""
-    def __init__(self, text, created_at=None):
-        self.text = text
-        self.created_at = created_at
 
-MOCK_TWEETS_DATA = [
-    MockTweet("@MarioNawfal $1.5B spent every year!? Wow, that makes my political contributions last year small by comparison."),
-    MockTweet("RT @_jaybaxter_: The reason posts with links sometimes get lower reach is not because they are explicitly downranked by any evil rule or lo…"),
-    MockTweet("@SERobinsonJr @_jaybaxter_ That does need some love"),
-    MockTweet("@SawyerMerritt Uh oh 😬 Inverse Cramer is tough karma to overcome!"),
-    MockTweet("I'm calling weekend reviews with Autopilot to accelerate progress."),
-    MockTweet("@nataliegwinters 💯"),
-    MockTweet("RT @SawyerMerritt: NEWS: Tesla reportedly has 300 test operators driving around Austin, Texas to prepare for their big June robotaxi launch…"),
-    MockTweet("@SawyerMerritt Waymo needs \"way mo\" money to succeed 😂"),
-    MockTweet("@MarioNawfal Cool"),
-    MockTweet("Good move. There are thousands of committees that take up a lot of time without clear accomplishments. A reset was needed."),
-    MockTweet("To be clear, there is no explicit rule limiting the reach of links in posts. The algorithm tries (not always successfully) to maximize user-seconds on 𝕏, so a link that causes people to cut short their time here will naturally get less exposure.")
-]
 
 async def run_test():
     """Test function to verify the twitter role update functionality"""
