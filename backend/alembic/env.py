@@ -13,6 +13,8 @@ load_dotenv()
 
 from app.database.session import Base
 from app.models.user import User  
+from app.models.history import GenerateHistory
+from app.models.reference import PromptReference
 
 from config import settings  # load DATABASE_URL from .env
 
