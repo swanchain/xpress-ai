@@ -2,25 +2,27 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/services/apiClient";
 
-function ReplyTweet({ availableCredits }) {
+function ReplyTweet({ availableCredits, getUser }) {
   const [topic, setTopic] = useState("");
   const [stance, setStance] = useState("");
   const [requirements, setRequirements] = useState("");
   const [tweetLoading, setTweetLoading] = useState(false);
+  const [quickReplyLoading, setQuickReplyLoading] = useState(false);
   const [op, setOp] = useState("");
   const [reply, setReply] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleGenerate = async () => {
-    // TODO: integrate tweet generation logic
-    setTweetLoading(true);
-    console.log("Generate Tweet", { topic, stance, requirements });
+    setReply("");
     try {
       if (availableCredits > 0 && topic) {
-        const opReq = await apiClient.post(
-          `/ai/get-tweet-content?tweet_url=${topic}`
-        );
+        if (!op) {
+          const opReq = await apiClient.post(
+            `/ai/get-tweet-content?tweet_url=${topic}`
+          );
 
-        setOp(opReq.data.tweet_content);
+          setOp(opReq.data.tweet_content);
+        }
 
         const response = await apiClient.post(
           `/ai/generate-tweet-reply?tweet_url=${topic}`
@@ -28,18 +30,46 @@ function ReplyTweet({ availableCredits }) {
 
         setReply(response.data.reply_content);
 
-        console.log("response", response.data);
+        // console.log("response", response.data);
+
+        await getUser();
+        setErrorMessage("");
+
+        return response.data.reply_content;
       } else {
-        console.log("no credits or no topic");
+        setTweetLoading(false);
+        // console.log("no credits or no topic");
+        setErrorMessage("Tweet URL is required.");
       }
     } catch (err) {
       console.log(err);
+      setErrorMessage(err.data.detail);
     }
   };
 
-  const handlePost = () => {
-    // TODO: integrate tweet posting logic
-    console.log("Post Tweet", { topic, stance, requirements });
+  const handlePost = async () => {
+    let replyText = reply;
+    if (!replyText) {
+      replyText = await handleGenerate();
+    }
+    if (topic) {
+      const tweetId = topic.split("/").pop(); // Extract tweet ID from the URL
+      const replyUrl = `https://x.com/intent/tweet?in_reply_to=${encodeURIComponent(
+        tweetId || ""
+      )}&text=${encodeURIComponent(replyText || "")}`;
+
+      // Create a popup in the center of the screen
+      const width = 600;
+      const height = 400;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+      window.open(
+        replyUrl,
+        "_blank",
+        `width=${width},height=${height},top=${top},left=${left}`
+      );
+      setQuickReplyLoading(false);
+    }
   };
 
   return (
@@ -57,10 +87,17 @@ function ReplyTweet({ availableCredits }) {
               id="topic"
               type="text"
               placeholder="Paste Tweet URL..."
-              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none focus:ring-4 focus:ring-gray-200 p-3 bg-gray-100"
+              className={`form-control w-full rounded-xl border-1 ${
+                errorMessage ? "border-red-500" : "border-gray-200"
+              } focus:outline-none focus:ring-4 focus:ring-gray-200 p-3 bg-gray-100`}
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
             />
+            {errorMessage && errorMessage.includes("Tweet URL") && (
+              <label className="text-sm text-red-500 flex">
+                {errorMessage}
+              </label>
+            )}
           </div>
 
           <div>
@@ -99,11 +136,49 @@ function ReplyTweet({ availableCredits }) {
           </div>
 
           <div className="flex justify-between">
-            <button onClick={handleGenerate} className="black-btn">
+            <button
+              onClick={() => {
+                setTweetLoading(true);
+                handleGenerate();
+              }}
+              className="black-btn"
+            >
               Generate Tweet
             </button>
-            <button onClick={handlePost} className="black-btn bg-[#76b291] ">
-              Post Reply
+            <button
+              onClick={() => {
+                setQuickReplyLoading(true);
+                handlePost();
+              }}
+              className="black-btn bg-[#76b291] "
+            >
+              {quickReplyLoading ? (
+                <div className="flex flex-row items-center gap-2">
+                  <svg
+                    className="animate-spin h-8 w-8 text-blue-600"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  <h2 className="">Generating...</h2>
+                </div>
+              ) : (
+                "Post Reply"
+              )}
             </button>
           </div>
         </div>
@@ -169,15 +244,21 @@ function ReplyTweet({ availableCredits }) {
               <h1 className="mt-4 text-left font-bold text-2xl">Reply</h1>
               <p className=" text-left border-1 rounded-xl p-2">{reply}</p>
 
-              <div className="mt-8 w-full flex">
+              <div className="mt-8 w-full flex gap-4">
                 <button
-                  className="black-btn w-full bg-[#76b291] "
+                  className="black-btn w-full"
                   onClick={() => {
-                    // setPurchaseLoading(false);
-                    // setTransactionHash("");
+                    setReply("");
+                    handleGenerate();
                   }}
                 >
-                  Send Tweet
+                  Regenerate
+                </button>
+                <button
+                  className="black-btn w-full bg-[#76b291] "
+                  onClick={handlePost}
+                >
+                  Post Reply
                 </button>
               </div>
             </>
@@ -232,23 +313,64 @@ function ReplyTweet({ availableCredits }) {
   );
 }
 
-function CreateTweet() {
+function CreateTweet({ availableCredits, getUser }) {
   const [topic, setTopic] = useState("");
   const [stance, setStance] = useState("");
   const [requirements, setRequirements] = useState("");
-  const handleGenerate = () => {
-    // TODO: integrate tweet generation logic
-    console.log("Generate Tweet", { topic, stance, requirements });
+  const [tweetLoading, setTweetLoading] = useState(false);
+  const [quickTweetLoading, setQuickTweetLoading] = useState(false);
+  const [tweet, setTweet] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleGenerate = async () => {
+    setTweet("");
+    try {
+      if (availableCredits > 0) {
+        const response = await apiClient.post(`/ai/generate-tweet`);
+
+        setTweet(response.data.tweet_content);
+
+        // console.log("response", response.data);
+
+        await getUser();
+        setErrorMessage("");
+
+        return response.data.tweet_content;
+      } else {
+        setTweetLoading(false);
+        // console.log("no credits or no topic");
+      }
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err.data.detail);
+    }
   };
 
-  const handlePost = () => {
-    // TODO: integrate tweet posting logic
-    console.log("Post Tweet", { topic, stance, requirements });
+  const handlePost = async () => {
+    let tweetText = tweet;
+    if (!tweetText) {
+      tweetText = await handleGenerate();
+    }
+    const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(
+      tweetText || ""
+    )}`;
+
+    // Create a popup in the center of the screen
+    const width = 600;
+    const height = 400;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+    window.open(
+      tweetUrl,
+      "_blank",
+      `width=${width},height=${height},top=${top},left=${left}`
+    );
+    setQuickTweetLoading(false);
   };
 
   return (
     <div className="min-w-3/4 mx-auto bg-white rounded-2xl border-gray-200 border-1">
-      <form>
+      <div>
         <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
           Create New Tweet
         </h2>
@@ -302,21 +424,153 @@ function CreateTweet() {
             />
           </div>
 
-          <div className="flex justify-between ">
-            <button onClick={handleGenerate} className="black-btn">
+          <div className="flex justify-between">
+            <button
+              onClick={() => {
+                setTweetLoading(true);
+                handleGenerate();
+              }}
+              className="black-btn"
+            >
               Generate Tweet
             </button>
-            <button onClick={handlePost} className="black-btn bg-[#76b291] ">
-              Post Tweet
+            <button
+              onClick={() => {
+                setQuickTweetLoading(true);
+                handlePost();
+              }}
+              className="black-btn bg-[#76b291] "
+            >
+              {quickTweetLoading ? (
+                <div className="flex flex-row items-center gap-2">
+                  <svg
+                    className="animate-spin h-8 w-8 text-blue-600"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  <h2 className="">Generating...</h2>
+                </div>
+              ) : (
+                "Post Tweet"
+              )}
             </button>
           </div>
         </div>
-      </form>
+      </div>
+
+      <div
+        className={`fixed inset-0 bg-black/50 flex items-start justify-center z-90 ${
+          tweetLoading
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => {
+          if (tweet) {
+            setTweetLoading(false);
+            setTweet("");
+          }
+        }}
+      >
+        <div
+          className={`my-auto max-w-2/5 bg-[#f2f2f2] rounded-[20px] p-8 transition-all duration-300 ease-out tranform ${
+            tweetLoading
+              ? "translate-y-0 opacity-100"
+              : "-translate-y-10 opacity-0"
+          }`}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent click from bubbling to outer div
+          }}
+        >
+          <h1 className="text-left font-bold text-2xl">Tweet</h1>
+          {tweet ? (
+            <>
+              <p className=" text-left border-1 rounded-xl p-2">{tweet}</p>
+
+              <div className="mt-8 w-full flex gap-4">
+                <button
+                  className="black-btn w-full"
+                  onClick={() => {
+                    setTweet("");
+                    handleGenerate();
+                  }}
+                >
+                  Regenerate
+                </button>
+                <button
+                  className="black-btn w-full bg-[#76b291] "
+                  onClick={handlePost}
+                >
+                  Post Tweet
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-row items-center gap-2 my-4">
+                <svg
+                  className="animate-spin h-8 w-8 text-blue-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+                <h2 className="text-xl font-semibold text-gray-400 animate-pulse">
+                  Generating Tweet...
+                </h2>
+              </div>
+              {/* <p className=" text-gray-500">
+                Please wait while we generate your tweet.
+              </p> */}
+              <div className="flex animate-pulse space-x-4">
+                <div className="flex-1 space-y-6 py-1">
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="col-span-2 h-2 rounded bg-gray-400"></div>
+                      <div className="col-span-1 h-2 rounded bg-gray-400"></div>
+                      <div className="col-span-1 h-2 rounded bg-gray-400"></div>
+                      <div className="col-span-2 h-2 rounded bg-gray-400"></div>
+                    </div>
+                    <div className="h-2 rounded bg-gray-400"></div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-export default function TweetPage({ selectedTab, availableCredits }) {
+export default function TweetPage({ selectedTab, availableCredits, getUser }) {
   return (
     <div className="lg:min-w-3/4 mx-auto bg-white rounded-2xl">
       {selectedTab === "create" && (
@@ -327,7 +581,7 @@ export default function TweetPage({ selectedTab, availableCredits }) {
           transition={{ type: "tween", duration: 0.2 }}
           className=" inset-0"
         >
-          <CreateTweet availableCredits={availableCredits} />
+          <CreateTweet availableCredits={availableCredits} getUser={getUser} />
         </motion.div>
       )}
       {selectedTab === "reply" && (
@@ -338,7 +592,7 @@ export default function TweetPage({ selectedTab, availableCredits }) {
           transition={{ type: "tween", duration: 0.2 }}
           className=" inset-0"
         >
-          <ReplyTweet availableCredits={availableCredits} />
+          <ReplyTweet availableCredits={availableCredits} getUser={getUser} />
         </motion.div>
       )}
     </div>

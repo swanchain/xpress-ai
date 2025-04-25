@@ -31,18 +31,18 @@ export default function Home() {
     verifyXConnection() // Automatically verifies connection if redirected from X
   }, [])
 
-  useEffect(() => {
-    const getUser = async () => {
+  const getUser = async () => {
+    const token = localStorage.getItem('xpress_access_token')
+    if (token) {
       const response = await apiClient.get('/user/get-user')
-      console.log(response.data.user)
+      // console.log(response.data.user)
       setUser(response.data.user)
     }
-    const token = localStorage.getItem('xpress_access_token')
+  }
 
-    if (token) {
-      getUser()
-    }
-  }, [connectLoad])
+  useEffect(() => {
+    getUser()
+  }, [connectLoad, transactionHash])
 
   useEffect(() => {
     const getCredits = async () => {
@@ -77,7 +77,8 @@ export default function Home() {
       const data = await contract.purchaseTweets(user.uuid, numTweets, {
         value: price,
       })
-      console.log('data: ', data)
+      // console.log('data: ', data)
+      await data.wait()
       setTransactionHash(data.hash)
     } catch (err) {
       console.log('err', err)
@@ -116,6 +117,7 @@ export default function Home() {
             <TweetPage
               selectedTab={selectedTab}
               availableCredits={availableCredits}
+              getUser={getUser}
             />
           ) : (
             <LandingPage />
@@ -132,7 +134,7 @@ export default function Home() {
         onClick={() => setShowModal(false)}
       >
         <div
-          className={`mt-10 bg-[#f2f2f2] rounded-[20px] p-4 transition-all duration-300 ease-out tranform ${
+          className={` mt-10 bg-[#f2f2f2] rounded-[20px] p-4 transition-all duration-300 ease-out tranform ${
             showModal
               ? 'translate-y-0 opacity-100'
               : '-translate-y-10 opacity-0'
@@ -141,7 +143,7 @@ export default function Home() {
             e.stopPropagation() // Prevent click from bubbling to outer div
           }}
         >
-          <div className="flex items-center mb-8">
+          <div className="flex items-center mb-8 min-w-full gap-10">
             <h2 className="text-xl font-semibold justify-between w-full">
               Purchase Credits
             </h2>
@@ -157,9 +159,36 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="flex flex-row gap-6 mb-6">
+
+          <div className="flex flex-row gap-6 mb-6 justify-evenly">
+            <div className="flex flex-col justify-center items-center bg-white rounded-[20px] p-8 border-1 border-gray-200 ">
+              <h2 className="font-semibold text-xl">Free</h2>
+              <p className="lead font-semibold text-base">5 Tweets</p>
+              <p className="m-2 mb-4">$0.00</p>
+              <button
+                onClick={() => handlePurchase(10)}
+                disabled={true}
+                className="black-btn text-base"
+              >
+                Purchase
+              </button>
+            </div>
+
+            {/* <div className="flex flex-col justify-center items-center bg-white rounded-[20px] p-8 border-1 border-gray-200">
+              <h2 className="font-semibold text-xl">Popular</h2>
+              <p className="lead font-semibold text-base">20 Tweets</p>
+              <p className="m-2 mb-4">$2.00</p>
+              <button
+                onClick={() => handlePurchase(20)}
+                disabled={!isConnected}
+                className="black-btn text-base"
+              >
+                Purchase
+              </button>
+            </div> */}
+
             <div className="flex flex-col justify-center items-center bg-white rounded-[20px] p-8 border-1 border-gray-200">
-              <h2 className="font-semibold text-xl">Starter</h2>
+              <h2 className="font-semibold text-xl">Pro</h2>
               <p className="lead font-semibold text-base">10 Tweets</p>
               <p className="m-2 mb-4">$1.00</p>
               <button
@@ -171,33 +200,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="flex flex-col justify-center items-center bg-white rounded-[20px] p-8 border-1 border-gray-200">
-              <h2 className="font-semibold text-xl">Popular</h2>
-              <p className="lead font-semibold text-base">20 Tweets</p>
-              <p className="m-2 mb-4">$2.00</p>
-              <button
-                onClick={() => handlePurchase(20)}
-                disabled={!isConnected}
-                className="black-btn text-base"
-              >
-                Purchase
-              </button>
-            </div>
-
-            <div className="flex flex-col justify-center items-center bg-white rounded-[20px] p-8 border-1 border-gray-200">
-              <h2 className="font-semibold text-xl">Pro</h2>
-              <p className="lead font-semibold text-base">30 Tweets</p>
-              <p className="m-2 mb-4">$3.00</p>
-              <button
-                onClick={() => handlePurchase(30)}
-                disabled={!isConnected}
-                className="black-btn text-base"
-              >
-                Purchase
-              </button>
-            </div>
-
-            <div className="flex flex-col justify-center items-center bg-white rounded-[20px] p-8 border-1 border-gray-200">
+            {/* <div className="flex flex-col justify-center items-center bg-white rounded-[20px] p-8 border-1 border-gray-200">
               <h2 className="font-semibold text-xl">Enterprise</h2>
               <p className="lead font-semibold text-base">40 Tweets</p>
               <p className="m-2 mb-4">$4.00</p>
@@ -208,7 +211,7 @@ export default function Home() {
               >
                 Purchase
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
