@@ -174,6 +174,33 @@ async def get_user_tweets_history(
             status_code=500,
             detail="You are running out of credit or the system is busy, please try it again."
         )
+    
+@router.get("/get-user-role-details", response_model=dict)
+async def get_user_role_details(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get the role details for the current user
+    """
+    try:
+        user_service = UserService(db)
+        role_details = await user_service.get_user_role_details(user.id)
+        
+        if not role_details:
+            raise HTTPException(
+                status_code=404,
+                detail="Role details not found"
+            )
+            
+        return role_details
+        
+    except Exception as e:
+        logger.error(f"Error getting role details: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get role details"
+        )
 
 
 # @router.post("/get-wallet-sign-message")
