@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+import re
 
 # Add the backend directory to Python path
 backend_dir = str(Path(__file__).resolve().parent.parent.parent)
@@ -16,17 +17,29 @@ from tweepy.errors import TooManyRequests
 import httpx
 import json
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 logger = logging.getLogger(__name__)
 
-async def get_user_tweets(client: tweepy.Client, user_id: int) -> Optional[List[tweepy.Tweet]]:
+async def get_user_tweets(client: tweepy.Client, user_id: int, use_mock: bool = False) -> Optional[List[tweepy.Tweet]]:
     """
     Get user's tweets
     Args:
         client: Tweepy client instance
         user_id: Twitter user ID
+        use_mock: Whether to use mock data (for testing)
     Returns:
         Optional[List[tweepy.Tweet]]: List of tweets or None if no tweets found
     """
+    if use_mock:
+        return MOCK_TWEETS_DATA
+
     tweets = client.get_users_tweets(
         id=user_id,
         max_results=10,
@@ -35,7 +48,6 @@ async def get_user_tweets(client: tweepy.Client, user_id: int) -> Optional[List[
     )
     
     if not tweets.data:
-        logger.info(f"No tweets found for user ID: {user_id}")
         return None
         
     return tweets.data
@@ -48,11 +60,8 @@ async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
     Returns:
         str: LLM analysis result
     """
-    # Convert tweets to string format
     tweets_content = "\n".join([tweet.text for tweet in tweets])
-    logger.info(f"Analyzing {len(tweets)} tweets")
     
-    # Prepare the API request payload
     payload = {
         "messages": [
             {
@@ -72,7 +81,6 @@ async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
     }
 
     async with httpx.AsyncClient(timeout=60.0) as client:
-        logger.info("Sending request to LLM API")
         response = await client.post(
             "https://inference.nebulablock.com/v1/chat/completions",
             json=payload,
@@ -83,11 +91,9 @@ async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
         )
         response.raise_for_status()
         result = response.json()
-        logger.info("Received response from LLM API")
         
         try:
             content = result["choices"][0]["message"]["content"]
-            logger.info("Successfully extracted content from LLM response")
             return content
         except (KeyError, IndexError) as e:
             logger.error(f"Failed to extract content from LLM response: {str(e)}")
@@ -103,56 +109,61 @@ async def create_future_citizen_role(user: User, user_data: str) -> str:
         str: The created role ID
     """
     try:
-        # Parse the LLM response string into sections
-        sections = {}
-        current_key = None
-        current_value = []
-        
-        for line in user_data.split('\n'):
-            line = line.strip()
-            if not line:
-                continue
-                
-            # Check if line starts a new section
-            if ':' in line and ',' in line.split(':', 1)[0]:
-                if current_key and current_value:
-                    sections[current_key] = '\n'.join(current_value).strip()
-                current_key = line.split(',', 1)[0].strip()
-                current_value = [line.split(':', 1)[1].strip()]
-            else:
-                if current_key:
-                    current_value.append(line)
-        
-        # Add the last section
-        if current_key and current_value:
-            sections[current_key] = '\n'.join(current_value).strip()
+        # Define the keywords we want to extract
+        keywords = [
+            "Category",
+            "System Prompt",
+            "Personality Traits",
+            "Background Story",
+            "Instruction Set",
+            "Language",
+            "Example Conversations",
+            "Knowledge Base"
+        ]
 
-        # Format data for API
-        try:
-            personality_traits = json.loads(sections.get('Personality Traits', '{"traits": []}'))
-            instruction_set = json.loads(sections.get('Instruction Set', '{"instructions": []}'))
-            knowledge_base = json.loads(sections.get('Knowledge Base', '{}'))
-            example_conversations = json.loads(sections.get('Example Conversations', '{}'))
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON from sections: {str(e)}")
-            # Provide default values if JSON parsing fails
-            personality_traits = {"traits": []}
-            instruction_set = {"instructions": []}
-            knowledge_base = {}
-            example_conversations = {}
+        # Helper function to extract content for a keyword
+        def extract_content(text: str, keyword: str) -> str:
+            try:
+                pattern = rf"{re.escape(keyword)}[^:]*?:\s*([\s\S]*?)(?=(?:{'|'.join(re.escape(k) for k in keywords)}[^:]*?:|$))"
+                match = re.search(pattern, text)
+                if not match:
+                    return ""
+                return match.group(1).strip()
+            except Exception as e:
+                logger.error(f"Error extracting content for '{keyword}': {str(e)}")
+                return ""
 
+        # Extract all sections
+        extracted_data = {keyword: extract_content(user_data, keyword) for keyword in keywords}
+
+        # Helper function to parse JSON content
+        def parse_json_content(content: str, default_value: dict) -> dict:
+            if not content:
+                return default_value
+            try:
+                return json.loads(content)
+            except json.JSONDecodeError:
+                try:
+                    json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                    if json_match:
+                        return json.loads(json_match.group(0))
+                except:
+                    pass
+                return default_value
+
+        # Prepare the payload
         payload = {
             "name": f"{user.x_screen_name}-{user.x_user_id}",
             "model_name": "meta-llama/Llama-3.3-70B-Instruct",
-            "system_prompt": sections.get('System Prompt', ''),
-            "personality_traits": [json.dumps({"traits": personality_traits.get("traits", [])})],
-            "background_story": sections.get('Background Story', ''),
-            "instruction_set": [json.dumps({"instructions": instruction_set.get("instructions", [])})],
+            "system_prompt": extracted_data["System Prompt"],
+            "personality_traits": [json.dumps(parse_json_content(extracted_data["Personality Traits"], {"traits": []}))],
+            "background_story": extracted_data["Background Story"],
+            "instruction_set": [json.dumps(parse_json_content(extracted_data["Instruction Set"], {"instructions": []}))],
             "version": "1.0",
-            "knowledge_base": knowledge_base,
-            "example_conversations": example_conversations,
-            "category": sections.get('Category', ''),
-            "language": sections.get('Language', 'English')
+            "knowledge_base": parse_json_content(extracted_data["Knowledge Base"], {}),
+            "example_conversations": parse_json_content(extracted_data["Example Conversations"], {}),
+            "category": extracted_data["Category"],
+            "language": extracted_data["Language"] or "English"
         }
 
         async with httpx.AsyncClient() as client:
@@ -182,14 +193,13 @@ async def update_user_role(user: User, role_id: str) -> None:
     Update user's role_id
     """
     user.update_user_role_by_user_id(user.id, role_id)
-    logger.info(f"Successfully updated role_id for user {user.id}")
 
-async def process_single_user(client: tweepy.Client, user: User) -> None:
+async def process_single_user(client: tweepy.Client, user: User, use_mock: bool = False) -> None:
     """
     Process the complete process for a single user
     """
     # 1. Get user's tweets
-    tweets = await get_user_tweets(client, user.x_user_id)
+    tweets = await get_user_tweets(client, user.x_user_id, use_mock)
     if not tweets:
         return
         
@@ -214,10 +224,7 @@ async def update_user_role_task() -> None:
         
         users_to_update = User.get_empty_ai_role_id_user_list()
         if not users_to_update:
-            logger.info("No users to update")
             return
-        
-        logger.info(f"Found {len(users_to_update)} users to update")
         
         for user in users_to_update:
             if not user.x_user_id:
@@ -235,7 +242,7 @@ async def update_user_role_task() -> None:
             
     except Exception as e:
         logger.error(f"Error in update_user_role_task: {str(e)}")
-        raise 
+        raise
 
 # Mock User class for testing purposes
 class MockUser:
@@ -252,6 +259,27 @@ class MockUser:
     def get_empty_ai_role_id_user_list():
         return [MockUser()]
 
+# Add mock tweets for testing
+class MockTweet:
+    """Mock Tweet class for testing"""
+    def __init__(self, text, created_at=None):
+        self.text = text
+        self.created_at = created_at
+
+MOCK_TWEETS_DATA = [
+    MockTweet("@MarioNawfal $1.5B spent every year!? Wow, that makes my political contributions last year small by comparison."),
+    MockTweet("RT @_jaybaxter_: The reason posts with links sometimes get lower reach is not because they are explicitly downranked by any evil rule or lo…"),
+    MockTweet("@SERobinsonJr @_jaybaxter_ That does need some love"),
+    MockTweet("@SawyerMerritt Uh oh 😬 Inverse Cramer is tough karma to overcome!"),
+    MockTweet("I'm calling weekend reviews with Autopilot to accelerate progress."),
+    MockTweet("@nataliegwinters 💯"),
+    MockTweet("RT @SawyerMerritt: NEWS: Tesla reportedly has 300 test operators driving around Austin, Texas to prepare for their big June robotaxi launch…"),
+    MockTweet("@SawyerMerritt Waymo needs \"way mo\" money to succeed 😂"),
+    MockTweet("@MarioNawfal Cool"),
+    MockTweet("Good move. There are thousands of committees that take up a lot of time without clear accomplishments. A reset was needed."),
+    MockTweet("To be clear, there is no explicit rule limiting the reach of links in posts. The algorithm tries (not always successfully) to maximize user-seconds on 𝕏, so a link that causes people to cut short their time here will naturally get less exposure.")
+]
+
 async def run_test():
     """Test function to verify the twitter role update functionality"""
     try:
@@ -259,31 +287,27 @@ async def run_test():
         dotenv.load_dotenv()
         
         # Verify required environment variables
-        required_env_vars = ['X_BEARER_TOKEN', 'NEBULA_API_KEY', 'FUTURECITIZEN_API_KEY']
+        required_env_vars = ['NEBULA_API_KEY', 'FUTURECITIZEN_API_KEY']  # Removed X_BEARER_TOKEN as it's not needed for mock
         missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
         if missing_vars:
-            print(f"Error: Missing required environment variables: {', '.join(missing_vars)}")
+            logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
             return
 
-        print("Starting test of twitter_role_update.py...")
-        
-        # Initialize Tweepy client
-        client = tweepy.Client(bearer_token=os.environ['X_BEARER_TOKEN'])
+        # Initialize Tweepy client with a dummy token (won't be used with mock data)
+        client = tweepy.Client(bearer_token="dummy_token")
         
         # Create a mock user
         test_user = MockUser()
-        print(f"Testing with mock user: ID={test_user.id}, Twitter ID={test_user.x_user_id}")
         
-        # Test the complete process
+        # Test the complete process with mock data
         try:
-            await process_single_user(client, test_user)
-            print("Test completed successfully!")
+            await process_single_user(client, test_user, use_mock=True)
         except Exception as e:
-            print(f"Error during test: {str(e)}")
+            logger.error(f"Error during test: {str(e)}")
             raise
 
     except Exception as e:
-        print(f"Test failed with error: {str(e)}")
+        logger.error(f"Test failed with error: {str(e)}")
         raise
 
 if __name__ == "__main__":
