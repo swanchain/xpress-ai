@@ -29,7 +29,7 @@ scheduler.add_job(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await create_tables()
+    # await create_tables()
     scheduler.start()
     yield
     scheduler.shutdown()
