@@ -188,5 +188,5 @@ async def get_generate_history(
         "total": total,
         "histories": result,
         "page": page,
-        "size": size
+        "size": len(result)
     }
