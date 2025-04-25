@@ -17,7 +17,14 @@
             --gradient-2: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
             --glass-bg: rgba(255, 255, 255, 0.9);
             --glass-border: rgba(255, 255, 255, 0.2);
-            --nav-height: 64px;
+            --nav-height: 64px; /* Base navbar height */
+            --nav-height-mobile: 90px; /* Navbar height on mobile when elements wrap */
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --nav-height: var(--nav-height-mobile); /* Update navbar height on mobile */
+            }
         }
 
         * {
@@ -38,15 +45,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            max-width: 1200px;
+            max-width: 1400px; /* Wider container */
             padding-left: 2rem;
             padding-right: 2rem;
         }
 
         #featuresSection {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1200px; /* Wider content area */
             margin: auto;
+            padding-top: var(--nav-height);
         }
 
         .content-wrapper {
@@ -57,7 +65,7 @@
         }
 
         .navbar {
-            position: absolute;
+            position: fixed; /* Changed from absolute to fixed */
             top: 0;
             left: 0;
             right: 0;
@@ -66,6 +74,7 @@
             -webkit-backdrop-filter: blur(10px);
             height: var(--nav-height);
             border-bottom: 1px solid var(--glass-border);
+            z-index: 100; /* Ensure navbar stays on top */
         }
 
         .gradient-section {
@@ -130,16 +139,32 @@
         }
 
         .content-section {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-            display: none;
+            flex: 0 0 50%; /* Keep for slider */
+            min-width: 50%; /* Keep for slider */
+            padding: 0 1rem;
+            display: flex; /* Ensure sections fill slider */
+            align-items: flex-start; /* Align cards to top */
+            margin-bottom: 1rem;
         }
 
-        .content-section.active {
-            opacity: 1;
-            transform: translateY(0);
-            display: block;
+        .content-section-inner {
+            width: 100%;
+            display: flex;
+            gap: 2rem;
+            margin: 0 auto; /* Center the content */
+            max-width: 80%; /* 20% margins on left and right */
+        }
+
+        .main-card {
+            flex: 1;
+            min-width: 0; /* Prevent flex item from overflowing */
+        }
+
+        .recent-tweets-card {
+            width: 300px; /* Slightly smaller */
+            flex-shrink: 0;
+            display: flex; /* Add flex display */
+            flex-direction: column; /* Stack children vertically */
         }
 
         .card {
@@ -153,20 +178,32 @@
         .card-header {
             background: transparent;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 2rem;
+            padding: 1rem 1.5rem;
         }
 
         .card-body {
-            padding: 2rem;
+            padding: 1.5rem;
         }
 
         .form-control, .form-select {
             background: rgba(0, 0, 0, 0.03);
             border: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 0.875rem;
+            padding: 0.75rem;
             border-radius: 12px;
             font-size: 1rem;
             transition: all 0.3s ease;
+            width: 100%; /* Ensure full width */
+        }
+
+        /* Smaller textareas for better space usage */
+        textarea.form-control {
+            resize: none; /* Prevents user resizing */
+        }
+
+        /* Make textareas smaller by default */
+        #newTweetForm textarea.form-control,
+        #replyForm textarea.form-control {
+            height: 80px; /* Fixed height instead of rows */
         }
 
         .form-control:focus, .form-select:focus {
@@ -270,16 +307,8 @@
             display: flex;
             transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
             width: 200%;
-            margin: 0 -1rem;
-        }
-
-        .content-section {
-            flex: 0 0 50%;
-            padding: 0 1rem;
-            opacity: 1;
-            transform: none;
-            display: block;
-            min-width: 50%;
+            margin: 0;
+            padding: 0;
         }
 
         .content-slider.show-create {
@@ -290,12 +319,473 @@
             transform: translateX(-50%);
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1200px) {
+            .container {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+            
+            .content-section-inner {
+                max-width: 90%; /* Less margin on smaller screens */
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .content-section-inner {
+                max-width: 95%; /* Even less margin on smaller screens */
+            }
+            
+            .recent-tweets-card {
+                width: 280px; /* Slightly smaller on medium screens */
+            }
+        }
+
+        @media (max-width: 768px) { /* Stack cards on smaller screens */
+            .content-section-inner {
+                flex-direction: column;
+                max-width: 100%; /* No margin on mobile */
+            }
+
+            .main-card,
+            .recent-tweets-card {
+                width: 100%;
+            }
+
+            .recent-tweets {
+                max-height: 300px; /* Limit height on mobile */
+                margin-bottom: 1rem;
+            }
+
+            /* Adjust main container padding for smaller screens */
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            /* Adjust navbar for mobile */
             .navbar .nav-section {
-                position: relative;
-                left: 0;
-                transform: none;
-                margin: 1rem auto;
+                margin-top: 0.5rem;
+                margin-bottom: 0.5rem;
+                order: 3; /* Move below buttons on mobile */
+                width: 100%;
+                justify-content: center;
+            }
+
+            .navbar .container {
+                flex-wrap: wrap; /* Allow navbar items to wrap */
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+
+            .navbar-brand {
+                flex-grow: 1; /* Allow brand to take space */
+            }
+            
+            /* Ensure proper spacing on small screens */
+            .container.py-5 {
+                padding-top: calc(var(--nav-height) + 1.5rem) !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            /* Further adjustments for very small screens */
+            .content-section {
+                padding: 0 0.5rem;
+            }
+            
+            .container.py-5 {
+                padding-top: calc(var(--nav-height) + 0.75rem) !important;
+                padding-bottom: 0.75rem !important;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .tweet-item {
+                padding: 0.75rem 1.25rem; /* Reduced padding */
+            }
+        }
+
+        .user-dropdown {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-left: 0.75rem;
+        }
+
+        .user-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-weight: 500;
+            color: #1d1d1f;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .user-button:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .user-button i {
+            font-size: 1.1rem;
+            color: #1d1d1f;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 0.5rem;
+            min-width: 220px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08),
+                       0 8px 20px rgba(0, 0, 0, 0.06);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px) scale(0.98);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+        }
+
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #1d1d1f;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .dropdown-item i {
+            font-size: 1.1rem;
+            color: #1d1d1f;
+            opacity: 0.8;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0.5rem;
+        }
+
+        /* AI Character Modal Styles */
+        .ai-character-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .ai-character-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .ai-character-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .trait-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 20px;
+            margin: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        /* Recent Tweets List Styles */
+        .recent-tweets {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            flex: 1; /* Take up all available space */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .recent-tweets-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.7);
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+
+        .recent-tweets-header h6 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .tweet-count {
+            font-size: 0.8rem; 
+            color: #86868b;
+            display: inline-block;
+        }
+
+        .recent-tweets-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto; /* Allow scrolling if content is too long */
+            flex: 1; /* Fill remaining space */
+        }
+
+        .tweet-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            background: var(--glass-bg);
+        }
+
+        .tweet-item:last-child {
+            border-bottom: none;
+        }
+
+        .tweet-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .tweet-content {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            -webkit-font-smoothing: antialiased;
+            word-wrap: break-word; /* Prevent long text overflow */
+        }
+
+        .tweet-time {
+            font-size: 0.8rem;
+            color: #86868b;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .tweet-item.selected {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        .tweet-item.selected::after {
+            content: '✓';
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #007AFF;
+            font-weight: 600;
+        }
+
+        /* Main content container adjustments */
+        .container.py-5 {
+            padding-top: calc(var(--nav-height) + 1rem) !important;
+            padding-bottom: 1rem !important;
+            min-height: 100vh;
+            align-items: flex-start;
+        }
+
+        /* Adjust main page sections */
+        #loginSection {
+            padding-top: 2rem;
+            width: 100%;
+        }
+
+        /* Main form area */
+        #newTweetForm,
+        #replyForm {
+            width: 100%;
+        }
+
+        /* Form spacing */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        /* Reduce vertical spacing */
+        .content-section {
+            margin-bottom: 1rem;
+        }
+
+        /* Form spacing */
+        .mb-4 {
+            margin-bottom: 1rem !important;
+        }
+
+        /* Card body padding */
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            padding: 1rem 1.5rem;
+        }
+
+        /* Responsive height adjustments */
+        @media (max-height: 800px) {
+            .container.py-5 {
+                padding-top: calc(var(--nav-height) + 0.75rem) !important;
+                padding-bottom: 0.75rem !important;
+            }
+
+            .content-section {
+                margin-bottom: 0.75rem;
+            }
+
+            .card-body {
+                padding: 1.25rem;
+            }
+
+            .card-header {
+                padding: 0.75rem 1.25rem;
+            }
+
+            .mb-4 {
+                margin-bottom: 0.75rem !important;
+            }
+
+            .recent-tweets {
+                max-height: 250px;
+            }
+        }
+
+        /* Make sure the cards in a content section have the same height */
+        .content-section-inner > div {
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Ensure all direct children have full height */
+        }
+
+        .content-section-inner .card,
+        .content-section-inner .recent-tweets {
+            flex: 1; /* Take up all available height in its container */
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Ensure full height */
+        }
+
+        .content-section-inner .card-body {
+            flex: 1; /* Take up all available space within card */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-section-inner form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Ensure the button row stays at the bottom */
+        .content-section-inner form > div:last-child {
+            margin-top: auto;
+            margin-bottom: 0;
+        }
+
+        /* Form element spacing */
+        .content-section-inner form > div:not(:last-child) {
+            margin-bottom: 1rem; /* Consistent spacing between form elements */
+        }
+
+        /* Allow textareas to grow a bit if there's extra space */
+        .content-section-inner textarea.form-control {
+            flex-grow: 1;
+            min-height: 80px;
+            max-height: 120px; /* Limit maximum height */
+        }
+
+        /* Form layout optimization */
+        .content-section-inner form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Space items evenly */
+        }
+
+        /* Ensure consistent height for input elements */
+        .content-section-inner .form-control,
+        .content-section-inner .form-select {
+            height: auto; /* Let height be determined by content and padding */
+        }
+
+        /* Ensure recent-tweets-card has the same height as main-card */
+        .recent-tweets-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Ensure full height */
+        }
+
+        .recent-tweets {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            flex: 1; /* Take up all available space */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Responsive adjustments for form elements */
+        @media (max-height: 800px) {
+            .content-section-inner textarea.form-control {
+                min-height: 60px; /* Smaller textareas on short screens */
             }
         }
     </style>
@@ -324,19 +814,53 @@
             </div>
 
             <div class="d-flex align-items-center">
+                <!-- Credits button (hidden until login) -->
                 <button id="creditButton" class="credit-button me-3 section-hidden">
                     <i class="bi bi-coin me-2"></i>
                     <span id="creditAmount">5</span> Credits
                 </button>
+
+                <!-- Login button (shown when not logged in) -->
                 <button id="loginBtn" class="btn btn-primary">
                     <i class="bi bi-twitter me-2"></i>Login with X
-                </button>
-                <button id="logoutBtn" class="btn btn-outline-dark ms-2 section-hidden">
-                    Logout
                 </button>
             </div>
         </div>
     </nav>
+
+    <!-- AI Character Modal -->
+    <div class="ai-character-modal" id="aiCharacterModal">
+        <div class="ai-character-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">AI Character Details</h4>
+                <button class="btn-close" id="closeAIModal"></button>
+            </div>
+            <div class="mb-4">
+                <h5 class="mb-2">Name</h5>
+                <p id="aiName" class="mb-0">Loading...</p>
+            </div>
+            <div class="mb-4">
+                <h5 class="mb-2">Model</h5>
+                <p id="aiModel" class="mb-0">Loading...</p>
+            </div>
+            <div class="mb-4">
+                <h5 class="mb-2">Personality Traits</h5>
+                <div id="aiTraits" class="mb-0">Loading...</div>
+            </div>
+            <div class="mb-4">
+                <h5 class="mb-2">Background Story</h5>
+                <p id="aiBackground" class="mb-0">Loading...</p>
+            </div>
+            <div class="mb-4">
+                <h5 class="mb-2">Category</h5>
+                <p id="aiCategory" class="mb-0">Loading...</p>
+            </div>
+            <div class="mb-4">
+                <h5 class="mb-2">Language</h5>
+                <p id="aiLanguage" class="mb-0">Loading...</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Content -->
     <div class="container py-5">
@@ -355,68 +879,94 @@
                 <div class="content-slider show-create">
                     <!-- Create Tweet Section -->
                     <div class="content-section">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Create New Tweet</h5>
+                        <div class="content-section-inner">
+                            <div class="card main-card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Create New Tweet</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="newTweetForm">
+                                        <div class="mb-4">
+                                            <label class="form-label">Topic</label>
+                                            <input type="text" class="form-control" placeholder="What would you like to tweet about?">
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="form-label">Stance (Optional)</label>
+                                            <select class="form-select">
+                                                <option value="">Choose stance...</option>
+                                                <option value="support">Supportive</option>
+                                                <option value="neutral">Neutral</option>
+                                                <option value="against">Against</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="form-label">Additional Requirements (Optional)</label>
+                                            <textarea class="form-control" placeholder="Any specific requirements for your tweet?"></textarea>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <button type="submit" class="btn btn-primary">Generate Tweet</button>
+                                            <button type="button" class="btn btn-success" disabled>Post Tweet</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <form id="newTweetForm">
-                                    <div class="mb-4">
-                                        <label class="form-label">Topic</label>
-                                        <input type="text" class="form-control" placeholder="What would you like to tweet about?">
+                            <div class="recent-tweets-card">
+                                <div class="recent-tweets">
+                                    <div class="recent-tweets-header">
+                                        <h6>Recent Tweets</h6>
+                                        <span class="tweet-count">5 tweets</span>
                                     </div>
-                                    <div class="mb-4">
-                                        <label class="form-label">Stance (Optional)</label>
-                                        <select class="form-select">
-                                            <option value="">Choose stance...</option>
-                                            <option value="support">Supportive</option>
-                                            <option value="neutral">Neutral</option>
-                                            <option value="against">Against</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-4">
-                                        <label class="form-label">Additional Requirements (Optional)</label>
-                                        <textarea class="form-control" rows="2"></textarea>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <button type="submit" class="btn btn-primary">Generate Tweet</button>
-                                        <button type="button" class="btn btn-success" disabled>Post Tweet</button>
-                                    </div>
-                                </form>
+                                    <ul class="recent-tweets-list" id="createTweetsList">
+                                        <!-- Tweets will be populated by JavaScript -->
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Reply Section -->
                     <div class="content-section">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Generate Reply</h5>
+                        <div class="content-section-inner">
+                            <div class="card main-card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Generate Reply</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="replyForm">
+                                        <div class="mb-4">
+                                            <label class="form-label">Tweet to Reply to</label>
+                                            <textarea class="form-control" placeholder="Paste the tweet you want to reply to..."></textarea>
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="form-label">Choose Sentiment</label>
+                                            <select class="form-select">
+                                                <option value="">Choose sentiment...</option>
+                                                <option value="positive">Positive</option>
+                                                <option value="neutral">Neutral</option>
+                                                <option value="negative">Negative</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="form-label">Additional Context (Optional)</label>
+                                            <textarea class="form-control" placeholder="Any additional context for your reply?"></textarea>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <button type="submit" class="btn btn-primary">Generate Reply</button>
+                                            <button type="button" class="btn btn-success" disabled>Post Reply</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <form id="replyForm">
-                                    <div class="mb-4">
-                                        <label class="form-label">Tweet to Reply to</label>
-                                        <textarea class="form-control" rows="3" placeholder="Paste the tweet you want to reply to..."></textarea>
+                            <div class="recent-tweets-card">
+                                <div class="recent-tweets">
+                                    <div class="recent-tweets-header">
+                                        <h6>Recent Tweets</h6>
+                                        <span class="tweet-count" style="font-size: 0.8rem; color: #86868b;">5 tweets</span>
                                     </div>
-                                    <div class="mb-4">
-                                        <label class="form-label">Choose Sentiment</label>
-                                        <select class="form-select">
-                                            <option value="">Choose sentiment...</option>
-                                            <option value="positive">Positive</option>
-                                            <option value="neutral">Neutral</option>
-                                            <option value="negative">Negative</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-4">
-                                        <label class="form-label">Additional Context (Optional)</label>
-                                        <textarea class="form-control" rows="2"></textarea>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <button type="submit" class="btn btn-primary">Generate Reply</button>
-                                        <button type="button" class="btn btn-success" disabled>Post Reply</button>
-                                    </div>
-                                </form>
+                                    <ul class="recent-tweets-list" id="replyTweetsList">
+                                        <!-- Tweets will be populated by JavaScript -->
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -486,27 +1036,162 @@
     <!-- Custom JS -->
     <script>
         // Show/hide sections based on login state
-        function updateUIForLogin(isLoggedIn) {
+        function updateUIForLogin(isLoggedIn, username = '') {
+            // Main sections visibility
             document.getElementById('loginSection').classList.toggle('section-hidden', isLoggedIn);
             document.getElementById('featuresSection').classList.toggle('section-hidden', !isLoggedIn);
-            document.getElementById('creditButton').classList.toggle('section-hidden', !isLoggedIn);
-            document.getElementById('loginBtn').classList.toggle('section-hidden', isLoggedIn);
-            document.getElementById('logoutBtn').classList.toggle('section-hidden', !isLoggedIn);
             document.getElementById('navSection').style.display = isLoggedIn ? 'flex' : 'none';
+            
+            // Login/User info visibility
+            document.getElementById('loginBtn').classList.toggle('section-hidden', isLoggedIn);
+            document.getElementById('creditButton').classList.toggle('section-hidden', !isLoggedIn);
+            
+            const navbarButtons = document.querySelector('.d-flex.align-items-center');
+            
+            if (isLoggedIn && username) {
+                // Remove existing user dropdown if any
+                const existingDropdown = document.getElementById('userDropdown');
+                if (existingDropdown) {
+                    existingDropdown.remove();
+                }
+                
+                // Create user dropdown
+                const userDropdown = document.createElement('div');
+                userDropdown.id = 'userDropdown';
+                userDropdown.className = 'user-dropdown';
+                userDropdown.innerHTML = `
+                    <button class="user-button" id="userButton">
+                        <i class="bi bi-person-circle"></i>
+                        <span id="username">${username}</span>
+                        <i class="bi bi-chevron-down ms-2" style="font-size: 0.8em; opacity: 0.6;"></i>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <a href="#" class="dropdown-item" id="viewAICharacter">
+                            <i class="bi bi-robot"></i>
+                            View AI Character
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" id="logoutBtn">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Logout
+                        </a>
+                    </div>
+                `;
+                
+                // Add the dropdown after the credit button
+                const creditButton = document.getElementById('creditButton');
+                creditButton.parentNode.insertBefore(userDropdown, creditButton.nextSibling);
+
+                // Add subtle hover effect to the chevron
+                const chevron = userDropdown.querySelector('.bi-chevron-down');
+                userDropdown.querySelector('.user-button').addEventListener('mouseenter', () => {
+                    chevron.style.transform = 'translateY(1px)';
+                });
+                userDropdown.querySelector('.user-button').addEventListener('mouseleave', () => {
+                    chevron.style.transform = 'translateY(0)';
+                });
+
+                // Add event listeners
+                setupUserDropdownListeners();
+            } else {
+                // Remove user dropdown if exists
+                const existingDropdown = document.getElementById('userDropdown');
+                if (existingDropdown) {
+                    existingDropdown.remove();
+                }
+            }
+
+            if (isLoggedIn) {
+                updateTweets();
+            }
         }
 
-        // Initialize UI
+        function setupUserDropdownListeners() {
+            // User dropdown toggle
+            document.getElementById('userButton').addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('dropdownMenu').classList.toggle('show');
+            });
+
+            // Logout handler
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                updateUIForLogin(false);
+            });
+
+            // View AI Character handler
+            document.getElementById('viewAICharacter').addEventListener('click', async function(e) {
+                e.preventDefault();
+                document.getElementById('dropdownMenu').classList.remove('show');
+                
+                // Example AI Character data (replace with actual API call)
+                const aiCharacter = {
+                    "name": "Jace Nguyen",
+                    "model_name": "meta-llama/Llama-3.3-70B-Instruct",
+                    "system_prompt": "imagine you're a crypto user responding naturally to this post...",
+                    "personality_traits": [
+                        "Confident",
+                        "Critical",
+                        "enthusiastic",
+                        "Self-aware",
+                        "Engaging",
+                        "inquisitive",
+                        "strategic"
+                    ],
+                    "background_story": "imagine you're a crypto user responding naturally to this post...",
+                    "category": "Just like real comment",
+                    "language": "English"
+                };
+
+                // Update modal content
+                document.getElementById('aiName').textContent = aiCharacter.name;
+                document.getElementById('aiModel').textContent = aiCharacter.model_name;
+                
+                // Display traits as tags
+                const traitsHtml = aiCharacter.personality_traits
+                    .map(trait => `<span class="trait-tag">${trait}</span>`)
+                    .join('');
+                document.getElementById('aiTraits').innerHTML = traitsHtml;
+                
+                document.getElementById('aiBackground').textContent = aiCharacter.background_story;
+                document.getElementById('aiCategory').textContent = aiCharacter.category;
+                document.getElementById('aiLanguage').textContent = aiCharacter.language;
+                
+                aiCharacterModal.classList.add('show');
+            });
+        }
+
+        // Initialize UI in logged out state
         updateUIForLogin(false);
 
         // Login button click handler
         document.getElementById('loginBtn').addEventListener('click', function() {
             // TODO: Implement Twitter login
-            updateUIForLogin(true);
+            updateUIForLogin(true, 'JohnDoe'); // Replace with actual username from login response
         });
 
-        // Logout button click handler
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            updateUIForLogin(false);
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('dropdownMenu');
+            const userButton = document.getElementById('userButton');
+            
+            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // AI Character modal handlers
+        const aiCharacterModal = document.getElementById('aiCharacterModal');
+        
+        document.getElementById('closeAIModal').addEventListener('click', function() {
+            aiCharacterModal.classList.remove('show');
+        });
+
+        // Close modal when clicking outside
+        aiCharacterModal.addEventListener('click', function(event) {
+            if (event.target === aiCharacterModal) {
+                aiCharacterModal.classList.remove('show');
+            }
         });
 
         // Credit button click handler
@@ -529,6 +1214,90 @@
                 slider.className = 'content-slider show-' + section;
             });
         });
+
+        // Format date to relative time
+        function formatRelativeTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            const diffInMinutes = Math.floor(diffInSeconds / 60);
+            const diffInHours = Math.floor(diffInMinutes / 60);
+            const diffInDays = Math.floor(diffInHours / 24);
+
+            if (diffInSeconds < 60) {
+                return 'just now';
+            } else if (diffInMinutes < 60) {
+                return `${diffInMinutes}m`;
+            } else if (diffInHours < 24) {
+                return `${diffInHours}h`;
+            } else if (diffInDays < 7) {
+                return `${diffInDays}d`;
+            } else {
+                return date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+            }
+        }
+
+        // Render tweets list
+        function renderTweets(tweets, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = tweets.map(tweet => `
+                <li class="tweet-item" data-created="${tweet.created_at}">
+                    <div class="tweet-content">${tweet.text}</div>
+                    <div class="tweet-time">${formatRelativeTime(tweet.created_at)}</div>
+                </li>
+            `).join('');
+
+            // Add click handlers for tweet items
+            container.querySelectorAll('.tweet-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove selected class from all items in this container
+                    container.querySelectorAll('.tweet-item').forEach(i => i.classList.remove('selected'));
+                    // Add selected class to clicked item
+                    this.classList.add('selected');
+                    
+                    // If this is in the reply section, populate the reply textarea
+                    if (containerId === 'replyTweetsList') {
+                        document.querySelector('#replyForm textarea').value = this.querySelector('.tweet-content').textContent;
+                    }
+                });
+            });
+        }
+
+        // Example tweets data
+        const exampleTweets = {
+            "status": "Get user tweets successfully",
+            "tweets": [
+                {
+                    "text": "please talk about your thoughts or ideas",
+                    "created_at": "2025-04-25T16:04:12+00:00"
+                },
+                {
+                    "text": "Yeah https://t.co/sCTSXCqzna",
+                    "created_at": "2025-04-21T18:17:20+00:00"
+                },
+                {
+                    "text": "RT @elonmusk: 😂",
+                    "created_at": "2025-04-21T18:15:39+00:00"
+                },
+                {
+                    "text": "RT @alphaflows_: Alpha is best.",
+                    "created_at": "2025-04-21T18:14:53+00:00"
+                },
+                {
+                    "text": "alpha might be good but omega is where its at",
+                    "created_at": "2025-04-21T17:03:24+00:00"
+                }
+            ]
+        };
+
+        // Function to update tweets (would normally fetch from API)
+        function updateTweets() {
+            renderTweets(exampleTweets.tweets, 'createTweetsList');
+            renderTweets(exampleTweets.tweets, 'replyTweetsList');
+        }
     </script>
 </body>
 </html>
