@@ -10,10 +10,13 @@ class Settings(BaseSettings):
     DEBUG: str
     # REDIS_URL: str
     
+    X_BEARER_TOKEN_FOR_API: str
+    
     X_API_KEY: str
     X_API_KEY_SECRET: str
     X_BEARER_TOKEN: str
     X_OAUTH_CALLBACK: str
+
     
     FUTURECITIZEN_X_TWEET_CONTENT_API: str
     FUTURECITIZEN_X_GENERATE_REPLY_API: str
