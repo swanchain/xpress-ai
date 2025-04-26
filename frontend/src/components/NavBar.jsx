@@ -50,7 +50,7 @@ export default function Navbar({
     <div className="fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur border-b border-white/20 z-80">
       <div className="container mx-auto px-4 flex items-center justify-between h-full z-80">
         <div className="font-semibold text-xl flex items-center gap-x-2">
-          XpressAI
+          <img src="/chat-bot.png" /> XpressAI
         </div>
         {user ? (
           <div className=" flex bg-black/5 p-1 rounded-[12px]">

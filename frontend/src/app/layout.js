@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import ContextProvider from '@/context'
 import { headers } from 'next/headers' // added
+import Head from 'next/head'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -14,8 +15,11 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata = {
-  title: 'Xpress.ai',
-  description: 'Xpress yourself',
+  title: 'XpressAI',
+  description: 'Twitter Assistant',
+  icons: {
+    icon: '/chat-bot.png',
+  },
 }
 
 export default async function RootLayout({ children }) {
@@ -24,6 +28,12 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang="en">
+      <Head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+      </Head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

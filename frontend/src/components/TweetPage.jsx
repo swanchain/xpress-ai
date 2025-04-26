@@ -71,7 +71,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
   };
 
   return (
-    <div className="max-h-4/5  w-full col-span-2  mx-auto bg-white rounded-2xl border-gray-200 border-1">
+    <div className="h-fit w-full col-span-2  mx-auto bg-white rounded-2xl border-gray-200 border-1">
       <div>
         <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
           Generate Reply
@@ -336,7 +336,7 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
   };
 
   return (
-    <div className="max-h-4/5 w-full col-span-2 mx-auto bg-white rounded-2xl border-gray-200 border-1">
+    <div className="h-fit w-full col-span-2 mx-auto bg-white rounded-2xl border-gray-200 border-1">
       <div>
         <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
           Create New Tweet
@@ -513,14 +513,14 @@ export default function TweetPage({
   getTweetHistory,
 }) {
   return (
-    <div className="lg:min-w-2/3 lg:max-w-2/3 max-h-2/3 mx-auto rounded-2xl flex mt-20">
+    <div className="lg:min-w-2/3 lg:max-w-2/3  mx-auto rounded-2xl flex mt-20">
       {selectedTab === "create" && (
         <motion.div
           key="create"
           initial={{ x: "-50%" }}
           animate={{ x: 0 }}
           transition={{ type: "tween", duration: 0.2 }}
-          className="grid grid-cols-3 w-full gap-8 max-h-2/3"
+          className="grid grid-cols-3 w-full gap-8 "
         >
           <CreateTweet
             availableCredits={availableCredits}
@@ -586,7 +586,7 @@ function RecentTweets({ tweetHistory }) {
   }, [tweetHistory]);
 
   return (
-    <div className="w-full max-h-4/5  overflow-y-auto col-span-1 mx-auto bg-white rounded-2xl border-gray-200 border-1 flex flex-col">
+    <div className="w-full h-full max-h-7/10  overflow-y-auto col-span-1 mx-auto bg-white rounded-2xl border-gray-200 border-1 flex flex-col">
       <div className="flex w-full justify-between items center p-6">
         <h1 className="flex font-medium ">Recent Tweets</h1>
         <div className="text-gray-300">{tweets.length} tweets</div>

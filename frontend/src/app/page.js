@@ -104,13 +104,6 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>TweetAI Assistant</title>
-        <link
-          href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </Head>
       <div className="fixed -top-50 -right-25 w-[500px] h-[500px] rounded-full  bg-gradient-to-br from-[#84fab0] to-[#8fd3f4] z-10 blur-[100px] opacity-15" />
       <div className="fixed -bottom-50 -left-25 w-[500px] h-[500px] rounded-full  bg-gradient-to-br from-[#f6d365] to-[#fda085] z-10 blur-[100px] opacity-15" />
       <div className="relative min-h-screen bg-[#f5f5f7] text-dark font-display flex flex-col">
