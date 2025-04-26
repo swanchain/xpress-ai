@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/services/apiClient";
 
-function ReplyTweet({ availableCredits, getUser }) {
+function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
   const [topic, setTopic] = useState("");
   const [stance, setStance] = useState("");
   const [requirements, setRequirements] = useState("");
   const [tweetLoading, setTweetLoading] = useState(false);
-  const [quickReplyLoading, setQuickReplyLoading] = useState(false);
   const [op, setOp] = useState("");
   const [reply, setReply] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -68,12 +67,11 @@ function ReplyTweet({ availableCredits, getUser }) {
         "_blank",
         `width=${width},height=${height},top=${top},left=${left}`
       );
-      setQuickReplyLoading(false);
     }
   };
 
   return (
-    <div className="min-w-3/4 mx-auto bg-white rounded-2xl border-gray-200 border-1">
+    <div className="max-h-4/5  w-full col-span-2  mx-auto bg-white rounded-2xl border-gray-200 border-1">
       <div>
         <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
           Generate Reply
@@ -146,39 +144,10 @@ function ReplyTweet({ availableCredits, getUser }) {
               Generate Tweet
             </button>
             <button
-              onClick={() => {
-                setQuickReplyLoading(true);
-                handlePost();
-              }}
-              className="black-btn bg-[#76b291] "
+              onClick={handlePost}
+              className="black-btn bg-[#76b291] hidden "
             >
-              {quickReplyLoading ? (
-                <div className="flex flex-row items-center gap-2">
-                  <svg
-                    className="animate-spin h-8 w-8 text-blue-600"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                  <h2 className="">Generating...</h2>
-                </div>
-              ) : (
-                "Post Reply"
-              )}
+              Post Reply
             </button>
           </div>
         </div>
@@ -313,12 +282,11 @@ function ReplyTweet({ availableCredits, getUser }) {
   );
 }
 
-function CreateTweet({ availableCredits, getUser }) {
+function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
   const [topic, setTopic] = useState("");
   const [stance, setStance] = useState("");
   const [requirements, setRequirements] = useState("");
   const [tweetLoading, setTweetLoading] = useState(false);
-  const [quickTweetLoading, setQuickTweetLoading] = useState(false);
   const [tweet, setTweet] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -365,11 +333,10 @@ function CreateTweet({ availableCredits, getUser }) {
       "_blank",
       `width=${width},height=${height},top=${top},left=${left}`
     );
-    setQuickTweetLoading(false);
   };
 
   return (
-    <div className="min-w-3/4 mx-auto bg-white rounded-2xl border-gray-200 border-1">
+    <div className="max-h-4/5 w-full col-span-2 mx-auto bg-white rounded-2xl border-gray-200 border-1">
       <div>
         <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
           Create New Tweet
@@ -434,40 +401,8 @@ function CreateTweet({ availableCredits, getUser }) {
             >
               Generate Tweet
             </button>
-            <button
-              onClick={() => {
-                setQuickTweetLoading(true);
-                handlePost();
-              }}
-              className="black-btn bg-[#76b291] "
-            >
-              {quickTweetLoading ? (
-                <div className="flex flex-row items-center gap-2">
-                  <svg
-                    className="animate-spin h-8 w-8 text-blue-600"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                  <h2 className="">Generating...</h2>
-                </div>
-              ) : (
-                "Post Tweet"
-              )}
+            <button className="black-btn bg-[#76b291] hidden">
+              Post Tweet
             </button>
           </div>
         </div>
@@ -570,18 +505,29 @@ function CreateTweet({ availableCredits, getUser }) {
   );
 }
 
-export default function TweetPage({ selectedTab, availableCredits, getUser }) {
+export default function TweetPage({
+  selectedTab,
+  availableCredits,
+  getUser,
+  tweetHistory,
+  getTweetHistory,
+}) {
   return (
-    <div className="lg:min-w-3/4 mx-auto bg-white rounded-2xl">
+    <div className="lg:min-w-2/3 lg:max-w-2/3 max-h-2/3 mx-auto rounded-2xl flex mt-20">
       {selectedTab === "create" && (
         <motion.div
           key="create"
           initial={{ x: "-50%" }}
           animate={{ x: 0 }}
           transition={{ type: "tween", duration: 0.2 }}
-          className=" inset-0"
+          className="grid grid-cols-3 w-full gap-8 max-h-2/3"
         >
-          <CreateTweet availableCredits={availableCredits} getUser={getUser} />
+          <CreateTweet
+            availableCredits={availableCredits}
+            getUser={getUser}
+            getTweetHistory={getTweetHistory}
+          />
+          <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>
       )}
       {selectedTab === "reply" && (
@@ -590,11 +536,71 @@ export default function TweetPage({ selectedTab, availableCredits, getUser }) {
           initial={{ x: "50%" }}
           animate={{ x: 0 }}
           transition={{ type: "tween", duration: 0.2 }}
-          className=" inset-0"
+          className="grid grid-cols-3 w-full gap-8"
         >
-          <ReplyTweet availableCredits={availableCredits} getUser={getUser} />
+          <ReplyTweet
+            availableCredits={availableCredits}
+            getUser={getUser}
+            getTweetHistory={getTweetHistory}
+          />
+          <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>
       )}
+    </div>
+  );
+}
+
+function RecentTweets({ tweetHistory }) {
+  const [tweets, setTweets] = useState([]);
+
+  useEffect(() => {
+    const now = new Date();
+    const relativeTweets = tweetHistory.map((tweet) => {
+      const diffMs = now.getTime() - new Date(tweet.created_at).getTime();
+      const diffMin = Math.floor(diffMs / 60000);
+
+      let relativeTime = "";
+
+      if (diffMin < 60) {
+        relativeTime = `${diffMin}m`;
+      } else if (diffMin < 1440) {
+        const hours = Math.floor(diffMin / 60);
+        relativeTime = `${hours}h`;
+      } else if (diffMin < 43200) {
+        // 30 * 24 * 60
+        const days = Math.floor(diffMin / 1440);
+        relativeTime = `${days}d`;
+      } else if (diffMin < 525600) {
+        // 12 * 30 * 24 * 60
+        const months = Math.floor(diffMin / 43200);
+        relativeTime = `${months}mo`;
+      } else {
+        const years = Math.floor(diffMin / 525600);
+        relativeTime = `${years}y`;
+      }
+
+      return { ...tweet, relativeTime };
+    });
+
+    setTweets(relativeTweets);
+  }, [tweetHistory]);
+
+  return (
+    <div className="w-full max-h-4/5  overflow-y-auto col-span-1 mx-auto bg-white rounded-2xl border-gray-200 border-1 flex flex-col">
+      <div className="flex w-full justify-between items center p-6">
+        <h1 className="flex font-medium ">Recent Tweets</h1>
+        <div className="text-gray-300">{tweets.length} tweets</div>
+      </div>
+      {tweets &&
+        tweets.map((tweet, index) => (
+          <div
+            key={index}
+            className="p-6 text-sm text-black/90 text-left border-t-1 border-gray-200"
+          >
+            <p className="">{tweet.text}</p>
+            <p className="mt-2 text-gray-500">{tweet.relativeTime || ""}</p>
+          </div>
+        ))}
     </div>
   );
 }

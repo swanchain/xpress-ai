@@ -22,6 +22,7 @@ export default function Home() {
   const [purchaseLoading, setPurchaseLoading] = useState(false)
   const [transactionHash, setTransactionHash] = useState(null)
   const [availableCredits, setAvailableCredits] = useState(null)
+  const [tweetHistory, setTweetHistory] = useState([])
 
   const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
   const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL
@@ -40,9 +41,21 @@ export default function Home() {
     }
   }
 
+  const getTweetHistory = async () => {
+    const token = localStorage.getItem('xpress_access_token')
+    if (token) {
+      const response2 = await apiClient.post('/user/get-user-tweets-history')
+      setTweetHistory(response2.data.tweets)
+    }
+  }
+
   useEffect(() => {
     getUser()
   }, [connectLoad, transactionHash])
+
+  useEffect(() => {
+    getTweetHistory()
+  }, [connectLoad])
 
   useEffect(() => {
     const getCredits = async () => {
@@ -118,13 +131,15 @@ export default function Home() {
               selectedTab={selectedTab}
               availableCredits={availableCredits}
               getUser={getUser}
+              tweetHistory={tweetHistory}
+              getTweetHistory={getTweetHistory}
             />
           ) : (
             <LandingPage />
           )}
         </main>
       </div>
-      {/* purchase modal */}(
+      {/* purchase modal */}
       <div
         className={`fixed inset-0 bg-black/50 flex items-start justify-center z-90 ${
           showModal
@@ -215,7 +230,8 @@ export default function Home() {
           </div>
         </div>
       </div>
-      ){/* tx modal */}
+
+      {/* tx modal */}
       <div
         className={`fixed inset-0 bg-black/50 flex items-start justify-center z-90 ${
           purchaseLoading
