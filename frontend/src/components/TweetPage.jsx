@@ -16,33 +16,36 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
     try {
       if (availableCredits <= 0) {
         setTweetLoading(false);
-        setErrorMessage("You don't have enough credits. Please purchase more credits.");
+        setErrorMessage(
+          "You don't have enough credits. Please purchase more credits."
+        );
         return;
       }
-      
+
       if (!url) {
         setTweetLoading(false);
         setErrorMessage("Tweet URL is required.");
         return;
       }
-      
+
       if (!op) {
         const opReq = await apiClient.post(
-          `/ai/get-tweet-content`,
-          {
-            tweet_url: url
-          }
+          `/ai/get-tweet-content?tweet_url=${url}`
         );
 
         setOp(opReq.data.tweet_content);
       }
 
+      const formData = new FormData();
+      formData.append("tweet_url", url);
+      if (stance) formData.append("choose_sentiment", stance);
+      if (requirements) formData.append("additional_context", requirements);
+
       const response = await apiClient.post(
         `/ai/generate-tweet-reply`,
+        formData,
         {
-          tweet_url: url,
-          choose_sentiment: stance || undefined,
-          additional_context: requirements || undefined,
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
 
@@ -56,7 +59,9 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
       return response.data.reply_content;
     } catch (err) {
       console.log(err);
-      setErrorMessage(err?.response?.data?.detail || "Failed to generate reply.");
+      setErrorMessage(
+        err?.response?.data?.detail || "Failed to generate reply."
+      );
     }
   };
 
@@ -114,7 +119,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
 
           <div>
             <label className=" font-medium mb-2 flex gap-1" htmlFor="stance">
-              Choose Sentiment (Optional)
+              Stance (Optional)
             </label>
             <select
               id="stance"
@@ -122,7 +127,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
               value={stance}
               onChange={(e) => setStance(e.target.value)}
             >
-              <option value="">Choose Sentiment...</option>
+              <option value="">Choose stance...</option>
               <option value="positive">Positive</option>
               <option value="neutral">Neutral</option>
               <option value="negative">Negative</option>
@@ -134,7 +139,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
               className="flex font-medium mb-2 gap-1"
               htmlFor="requirements"
             >
-              Additional Context{" "}
+              Additional Requirements{" "}
               <span className="text-gray-400"> (Optional)</span>
             </label>
             <textarea
@@ -309,20 +314,27 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
     try {
       if (availableCredits <= 0) {
         setTweetLoading(false);
-        setErrorMessage("You don't have enough credits. Please purchase more credits.");
+        setErrorMessage(
+          "You don't have enough credits. Please purchase more credits."
+        );
         return;
       }
-      
+
       if (!topic) {
         setErrorMessage("Topic is required.");
         setTweetLoading(false);
         return;
       }
-      
-      const response = await apiClient.post(`/ai/generate-tweet`, {
-        topic: topic,
-        stance: stance || undefined,
-        additional_requirements: requirements || undefined,
+
+      const formData = new FormData();
+      formData.append("topic", topic);
+      if (stance) formData.append("stance", stance);
+      if (requirements)
+        formData.append("additional_requirements", requirements);
+
+      // console.log(data);
+      const response = await apiClient.post(`/ai/generate-tweet`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       setTweet(response.data.tweet_content);
@@ -335,7 +347,9 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
       return response.data.tweet_content;
     } catch (err) {
       console.log(err);
-      setErrorMessage(err?.response?.data?.detail || "Failed to generate tweet.");
+      setErrorMessage(
+        err?.response?.data?.detail || "Failed to generate tweet."
+      );
     }
   };
 
