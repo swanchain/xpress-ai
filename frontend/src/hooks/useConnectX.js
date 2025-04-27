@@ -18,7 +18,7 @@ export default function useConnectX() {
 
     try {
       // Step 1: Get OAuth Authorization URL
-      const res = await apiClient.get(`user/x_oauth_login`)
+      const res = await apiClient.get(`/user/x_oauth_login`)
       const authData = res.data
 
       if (authData?.data?.authorized_url) {
@@ -54,7 +54,7 @@ export default function useConnectX() {
 
     try {
       // Step 2: Send OAuth Token & Verifier to Backend
-      const res = await apiClient.post(`user/login_x_account`, formData, {
+      const res = await apiClient.post(`/user/login_x_account`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
