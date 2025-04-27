@@ -1,0 +1,324 @@
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-display: 'Sf Pro Display', sans-serif;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+@layer components {
+  .heading-xl {
+    @apply font-semibold text-[3.5rem] leading-[1.1] tracking-[-0.02em];
+  }
+  .lead {
+    @apply text-xl font-normal text-[#6e6e73];
+  }
+  .black-btn {
+    @apply px-6 py-3 rounded-[12px] transition-all duration-300 ease-in-out bg-[#1d1d1f] border-none hover:bg-black hover:translate-y-[-2px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] text-white text-lg font-semibold hover:cursor-pointer disabled:bg-gray-300 disabled:transition-none disabled:hover:translate-0 disabled:hover:shadow-none disabled:cursor-not-allowed;
+  }
+}
+/* 
+:root {
+  --gradient-1: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+  --gradient-2: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --nav-height: 64px;
+}
+
+* {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+
+body {
+  background: #f5f5f7;
+  min-height: 100vh;
+  padding-top: 0;
+  color: #1d1d1f;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 1200px;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+#featuresSection {
+  width: 100%;
+  max-width: 1000px;
+  margin: auto;
+}
+
+.content-wrapper {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding-top: 0;
+}
+
+.navbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  height: var(--nav-height);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.gradient-section {
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  z-index: -1;
+}
+
+.gradient-1 {
+  background: var(--gradient-1);
+  top: -200px;
+  right: -100px;
+}
+
+.gradient-2 {
+  background: var(--gradient-2);
+  bottom: -200px;
+  left: -100px;
+}
+
+.nav-link {
+  color: #1d1d1f;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  margin: 0 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+}
+
+.nav-link.active {
+  background-color: #1d1d1f;
+  color: white;
+}
+
+.credit-button {
+  background: #1d1d1f;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.credit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.section-hidden {
+  display: none;
+}
+
+.content-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  display: none;
+}
+
+.content-section.active {
+  opacity: 1;
+  transform: translateY(0);
+  display: block;
+}
+
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+}
+
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+.form-control,
+.form-select {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0.875rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background: white;
+  border-color: #1d1d1f;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: #1d1d1f;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-success {
+  background: #34c759;
+  border: none;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #30b753;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.2);
+}
+
+.pricing-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.pricing-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+  font-weight: 600;
+  font-size: 3.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: #6e6e73;
+}
+
+.modal-content {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.navbar .nav-section {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.navbar .nav-link {
+  margin: 0;
+  font-size: 0.9rem;
+  padding: 8px 24px;
+}
+
+.navbar .nav-link.active {
+  background: white;
+  color: #1d1d1f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.content-slider {
+  display: flex;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 200%;
+  margin: 0 -1rem;
+}
+
+.content-section {
+  flex: 0 0 50%;
+  padding: 0 1rem;
+  opacity: 1;
+  transform: none;
+  display: block;
+  min-width: 50%;
+}
+
+.content-slider.show-create {
+  transform: translateX(0);
+}
+
+.content-slider.show-reply {
+  transform: translateX(-50%);
+}
+
+@media (max-width: 768px) {
+  .navbar .nav-section {
+    position: relative;
+    left: 0;
+    transform: none;
+    margin: 1rem auto;
+  }
+} */

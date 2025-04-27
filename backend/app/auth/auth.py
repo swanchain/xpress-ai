@@ -2,7 +2,10 @@ from datetime import datetime, timedelta
 from typing import Optional
 import time
 import logging
+import requests
+import json
 from jose import JWTError, jwt
+from requests_oauthlib import OAuth1
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
@@ -12,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from config import settings
 from app.database.session import get_db, get_one_object_by_filter
+from constants import *
 
 logger = logging.getLogger()
 
@@ -51,7 +55,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise credentials_exception
 
     user_id = int(user_id)
-    user: User = await get_one_object_by_filter(db, User, user_id=user_id)
+    user: User = await get_one_object_by_filter(db, User, x_user_id=user_id)
     
     if user is None:
         raise credentials_exception
@@ -69,3 +73,30 @@ def get_sign_message(wallet_address: str):
 
     return msg
 
+
+
+"""X OAuth"""
+def oauth_request_token():
+    oauth = OAuth1(settings.X_API_KEY, client_secret=settings.X_API_KEY_SECRET)
+    # Request
+    params = {
+        'oauth_callback': settings.X_OAUTH_CALLBACK
+    }
+    oauth_response = requests.post(REQUEST_TOKEN_URL, auth=oauth, params=params)
+    return oauth_response
+
+
+def oauth_user_verification(oauth_token: str, oauth_verifier: str):
+    oauth = OAuth1(settings.X_API_KEY,
+               client_secret=settings.X_API_KEY_SECRET,
+               resource_owner_key=oauth_token,
+               verifier=oauth_verifier)
+    oauth_response = requests.post(OAUTH_ACCESS_TOKEN_URL, auth=oauth)
+    return oauth_response
+
+def decode_oauth_response(oauth_response: json):
+    if oauth_response.status_code == 200:
+        credentials = oauth_response.content.decode('utf-8')
+        response_data = dict(x.split('=') for x in credentials.split('&'))
+        return True, response_data
+    return False, None

@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+
 import os
 class Settings(BaseSettings):
     DATABASE_URL: str
@@ -7,12 +8,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     DOMAIN: str
     DEBUG: str
-    REDIS_URI: str
+    # REDIS_URL: str
+    
+    X_BEARER_TOKEN_FOR_API: str
     
     X_API_KEY: str
     X_API_KEY_SECRET: str
     X_BEARER_TOKEN: str
     X_OAUTH_CALLBACK: str
+
     
     FUTURECITIZEN_X_TWEET_CONTENT_API: str
     FUTURECITIZEN_X_GENERATE_REPLY_API: str
@@ -20,6 +24,9 @@ class Settings(BaseSettings):
     FUTURECITIZEN_LOGIN_EMAIL: str
     FUTURECITIZEN_LOGIN_PSWD: str
     FUTURECITIZEN_ROLE_ID: int
+
+    RPC: str
+    CONTRACT_ADDRESS: str
 
     
     class Config:
@@ -70,3 +77,4 @@ logging_config = {
     },
     "root": {"handlers": ["console", "file"], "level": log_level},
 }
+

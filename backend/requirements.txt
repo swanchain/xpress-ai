@@ -16,13 +16,18 @@ redis==5.2.0
 fastapi-limiter==0.1.6
 APScheduler==3.11.0
 PyJWT==2.10.1
+alembic==1.15.2
+cachetools==5.5.2
+
+# Twitter API
+tweepy==4.15.0
 
 # Web3py
 web3==6.19.0
 
 # OAuth
 requests==2.32.3
-requests-oauthlib==2.0.0
+requests-oauthlib>=1.2.0,<2.0.0
 
 passlib[bcrypt]
 python-jose[cryptography]
