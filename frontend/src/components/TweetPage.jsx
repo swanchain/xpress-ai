@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/services/apiClient";
 
 function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
-  const [topic, setTopic] = useState("");
+  const [url, setUrl] = useState("");
   const [stance, setStance] = useState("");
   const [requirements, setRequirements] = useState("");
   const [tweetLoading, setTweetLoading] = useState(false);
@@ -14,37 +14,46 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
   const handleGenerate = async () => {
     setReply("");
     try {
-      if (availableCredits > 0 && topic) {
-        if (!op) {
-          const opReq = await apiClient.post(
-            `/ai/get-tweet-content?tweet_url=${topic}`
-          );
-
-          setOp(opReq.data.tweet_content);
-        }
-
-        const response = await apiClient.post(
-          `/ai/generate-tweet-reply`,
+      if (availableCredits <= 0) {
+        setTweetLoading(false);
+        setErrorMessage("You don't have enough credits. Please purchase more credits.");
+        return;
+      }
+      
+      if (!url) {
+        setTweetLoading(false);
+        setErrorMessage("Tweet URL is required.");
+        return;
+      }
+      
+      if (!op) {
+        const opReq = await apiClient.post(
+          `/ai/get-tweet-content`,
           {
-            tweet_url: topic,
-            choose_sentiment: stance || undefined,
-            additional_context: requirements || undefined,
+            tweet_url: url
           }
         );
 
-        setReply(response.data.reply_content);
-
-        // console.log("response", response.data);
-
-        await getUser();
-        setErrorMessage("");
-
-        return response.data.reply_content;
-      } else {
-        setTweetLoading(false);
-        // console.log("no credits or no topic");
-        setErrorMessage("Tweet URL is required.");
+        setOp(opReq.data.tweet_content);
       }
+
+      const response = await apiClient.post(
+        `/ai/generate-tweet-reply`,
+        {
+          tweet_url: url,
+          choose_sentiment: stance || undefined,
+          additional_context: requirements || undefined,
+        }
+      );
+
+      setReply(response.data.reply_content);
+
+      // console.log("response", response.data);
+
+      await getUser();
+      setErrorMessage("");
+
+      return response.data.reply_content;
     } catch (err) {
       console.log(err);
       setErrorMessage(err?.response?.data?.detail || "Failed to generate reply.");
@@ -56,8 +65,8 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
     if (!replyText) {
       replyText = await handleGenerate();
     }
-    if (topic) {
-      const tweetId = topic.split("/").pop(); // Extract tweet ID from the URL
+    if (url) {
+      const tweetId = url.split("/").pop(); // Extract tweet ID from the URL
       const replyUrl = `https://x.com/intent/tweet?in_reply_to=${encodeURIComponent(
         tweetId || ""
       )}&text=${encodeURIComponent(replyText || "")}`;
@@ -83,20 +92,20 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
         </h2>
         <div className="space-y-6 p-8">
           <div>
-            <label className=" font-medium mb-2 flex" htmlFor="topic">
+            <label className=" font-medium mb-2 flex" htmlFor="url">
               Tweet to Reply To
             </label>
             <input
-              id="topic"
+              id="url"
               type="text"
               placeholder="Paste Tweet URL..."
               className={`form-control w-full rounded-xl border-1 ${
                 errorMessage ? "border-red-500" : "border-gray-200"
               } focus:outline-none focus:ring-4 focus:ring-gray-200 p-3 bg-gray-100`}
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
             />
-            {errorMessage && errorMessage.includes("Tweet URL") && (
+            {errorMessage && (
               <label className="text-sm text-red-500 flex">
                 {errorMessage}
               </label>
@@ -298,30 +307,32 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
   const handleGenerate = async () => {
     setTweet("");
     try {
-      if (availableCredits > 0) {
-        if (!topic) {
-          setErrorMessage("Topic is required.");
-          setTweetLoading(false);
-          return;
-        }
-        const response = await apiClient.post(`/ai/generate-tweet`, {
-          topic: topic,
-          stance: stance || undefined,
-          additional_requirements: requirements || undefined,
-        });
-
-        setTweet(response.data.tweet_content);
-
-        // console.log("response", response.data);
-
-        await getUser();
-        setErrorMessage("");
-
-        return response.data.tweet_content;
-      } else {
+      if (availableCredits <= 0) {
         setTweetLoading(false);
-        // console.log("no credits or no topic");
+        setErrorMessage("You don't have enough credits. Please purchase more credits.");
+        return;
       }
+      
+      if (!topic) {
+        setErrorMessage("Topic is required.");
+        setTweetLoading(false);
+        return;
+      }
+      
+      const response = await apiClient.post(`/ai/generate-tweet`, {
+        topic: topic,
+        stance: stance || undefined,
+        additional_requirements: requirements || undefined,
+      });
+
+      setTweet(response.data.tweet_content);
+
+      // console.log("response", response.data);
+
+      await getUser();
+      setErrorMessage("");
+
+      return response.data.tweet_content;
     } catch (err) {
       console.log(err);
       setErrorMessage(err?.response?.data?.detail || "Failed to generate tweet.");
@@ -364,10 +375,17 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
               id="topic"
               type="text"
               placeholder="What would you like to tweet about?"
-              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
+              className={`form-control w-full rounded-xl border-1 ${
+                errorMessage ? "border-red-500" : "border-gray-200"
+              } focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200`}
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
             />
+            {errorMessage && (
+              <label className="text-sm text-red-500 flex">
+                {errorMessage}
+              </label>
+            )}
           </div>
 
           <div>
