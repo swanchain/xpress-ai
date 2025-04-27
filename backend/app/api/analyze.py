@@ -8,6 +8,7 @@ import traceback
 from datetime import timedelta, datetime, timezone
 from typing import Annotated, List, Dict, Optional
 from urllib.parse import urlencode, urljoin
+import os
 
 from eth_account.messages import encode_defunct
 from fastapi import APIRouter, Form, Depends, HTTPException, status, Request
@@ -41,6 +42,7 @@ from app.services.api_service import (
     get_x_tweet_content
 )
 from app.services.credit_service import check_credits_enough
+from app.services.user_service import UserService
 
 
 router = APIRouter(prefix="/ai", tags=["AI Analyze"])
@@ -49,6 +51,9 @@ logger = logging.getLogger()
 
 @router.post("/generate-tweet", response_model=dict)
 async def generate_tweet(
+    topic: str = Form(...),
+    stance: Optional[str] = Form(None),
+    additional_requirements: Optional[str] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -57,30 +62,69 @@ async def generate_tweet(
             status_code=400, 
             detail="Not enough credits"
         )
-    
-    x_username = user.x_screen_name
-    ai_role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
 
-    ref: PromptReference = await get_one_object_by_filter(db, PromptReference)
-    if not ref:
-        raise HTTPException(
-            status_code=500, 
-            detail="Invalid ref. Please add ref first"
-        )
+    user_service = UserService(db)
+    role = await user_service.get_user_role_details(user.id)
+    if not role:
+        role = settings.FUTURECITIZEN_ROLE_ID
 
-    tweet_id = await get_x_tweet_id(ref.ref_url)
-
-    tweet_content = await get_x_task_reply(
-        tweet_id,
-        ai_role_id
+    # Build system prompt
+    system_prompt = (
+        f"You are an AI assistant with the following configuration:\n"
+        f"Name: {role.get('name', '')}\n"
+        f"System Prompt: {role.get('system_prompt', '')}\n"
+        f"Personality Traits: {', '.join(role.get('personality_traits', []))}\n"
+        f"Background Story: {role.get('background_story', '')}\n"
+        f"Category: {role.get('category', '')}\n"
+        f"Language: {role.get('language', '')}\n\n"
+        "You should build your personality framework with the above configuration and generate content according to the user's requirements."
+        "Please respond in character, maintaining consistency with your configuration. "
+        "Keep responses natural and engaging while staying true to your character."
+        "The above configuration is just your personality framework, you should imitate the tone of voice through these personality frameworks, character, your answer does not need to be completely consistent with the config here, especially when the user's topic does not match his personality framework, you should try to imitate the user's tone of voice to generate content that matches the topic"
     )
 
-    if not tweet_content:
-        raise HTTPException(
-            status_code=500, 
-            detail="Invalid content"
-        )
-    
+    # Compose user prompt
+    user_prompt = (
+        f"Please generate a piece of content that can be sent to social media, with the TOPIC of the content being {topic},"
+        f"the EMOTION of the content is {stance if stance else 'no specific emotion'},"
+        f"the ADDITIONAL REQUIREMENTS of the content are {additional_requirements if additional_requirements else 'none' }."
+    )
+
+    payload = {
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ],
+        "model": "meta-llama/Llama-3.3-70B-Instruct",
+        "max_tokens": None,
+        "temperature": 1,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                os.environ['NEBULA_GENERATE_REPLY_API'],
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {os.environ['NEBULA_API_KEY']}"
+                }
+            )
+            response.raise_for_status()
+            ai_result = response.json()
+            tweet_content = ai_result.get('choices', [{}])[0].get('message', {}).get('content', '')
+    except Exception as e:
+        logger.error(f"AI generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="AI generation failed")
+
     # update user credit
     user.total_generated = user.total_generated + 1
     user.updated_at = int(time.time())
@@ -90,10 +134,10 @@ async def generate_tweet(
     # update history
     history = GenerateHistory(
         uuid=user.uuid,
-        x_screen_name=x_username,
+        x_screen_name=user.x_screen_name,
         generate_type=GENERATE_TYPE_TWEET,
         generated_text=tweet_content,
-        tweet_url=ref.ref_url,
+        tweet_url=None,
         created_at=int(time.time()),
         updated_at=int(time.time())
     )
@@ -120,8 +164,10 @@ async def get_tweet_content(
     
 
 @router.post("/generate-tweet-reply", response_model=dict)
-async def analyze(
-    tweet_url: str,
+async def generate_tweet_reply(
+    tweet_url: str = Form(...),
+    choose_sentiment: Optional[str] = Form(None),
+    additional_context: Optional[str] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -130,23 +176,78 @@ async def analyze(
             status_code=400, 
             detail="Not enough credits"
         )
-    
-    x_username = user.x_screen_name
-    ai_role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
 
-    tweet_id = await get_x_tweet_id(tweet_url)
+    user_service = UserService(db)
+    role = await user_service.get_user_role_details(user.id)
+    if not role:
+        role = settings.FUTURECITIZEN_ROLE_ID
 
-    reply_content = await get_x_task_reply(
-        tweet_id,
-        ai_role_id
+    # Get tweet content
+    tweet_content = get_x_tweet_content(tweet_url)
+
+    # Build system prompt (same as generate-tweet)
+    system_prompt = (
+        f"You are an AI assistant with the following configuration:\n"
+        f"Name: {role.get('name', '')}\n"
+        f"System Prompt: {role.get('system_prompt', '')}\n"
+        f"Personality Traits: {', '.join(role.get('personality_traits', []))}\n"
+        f"Background Story: {role.get('background_story', '')}\n"
+        f"Category: {role.get('category', '')}\n"
+        f"Language: {role.get('language', '')}\n\n"
+        "You should build your personality framework with the above configuration and generate content according to the user's requirements."
+        "Please respond in character, maintaining consistency with your configuration. "
+        "Keep responses natural and engaging while staying true to your character."
+        "The above configuration is just your personality framework, you should imitate the tone of voice through these personality frameworks, character, your answer does not need to be completely consistent with the config here, especially when the user's topic does not match his personality framework, you should try to imitate the user's tone of voice to generate content that matches the topic"
     )
+
+    # Compose user prompt for reply
+    user_prompt = (
+        f"Please write a reply to the following tweet: '{tweet_content}'. "
+        f"The sentiment of your reply should be: {choose_sentiment if choose_sentiment else 'no specific sentiment'}. "
+        f"Additional context for your reply: {additional_context if additional_context else 'none'}."
+    )
+
+    payload = {
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ],
+        "model": "meta-llama/Llama-3.3-70B-Instruct",
+        "max_tokens": None,
+        "temperature": 1,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                os.environ['NEBULA_GENERATE_REPLY_API'],
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {os.environ['NEBULA_API_KEY']}"
+                }
+            )
+            response.raise_for_status()
+            ai_result = response.json()
+            reply_content = ai_result.get('choices', [{}])[0].get('message', {}).get('content', '')
+    except Exception as e:
+        logger.error(f"AI generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="AI generation failed")
 
     if not reply_content:
         raise HTTPException(
             status_code=400, 
             detail="Invalid reply_content"
         )
-    
+
     # update user credit
     user.total_generated = user.total_generated + 1
     user.updated_at = int(time.time())
@@ -156,7 +257,7 @@ async def analyze(
     # update history
     history = GenerateHistory(
         uuid=user.uuid,
-        x_screen_name=x_username,
+        x_screen_name=user.x_screen_name,
         generate_type=GENERATE_TYPE_REPLY,
         generated_text=reply_content,
         tweet_url=tweet_url,
