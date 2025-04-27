@@ -185,6 +185,7 @@ async def get_user_role_details(
     """
     try:
         user_service = UserService(db)
+        print(user.id)
         role_details = await user_service.get_user_role_details(user.id)
         
         if not role_details:
