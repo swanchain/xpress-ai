@@ -62,7 +62,7 @@ async def analyze_tweets_with_llm(tweets: List[tweepy.Tweet]) -> str:
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
-            os.environ['NEBULA_GENERATE_ROLE_API'],
+            os.environ['NEBULA_GENERATE_REPLY_API'],
             json=payload,
             headers={
                 "Content-Type": "application/json",

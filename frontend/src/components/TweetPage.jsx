@@ -24,7 +24,12 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
         }
 
         const response = await apiClient.post(
-          `/ai/generate-tweet-reply?tweet_url=${topic}`
+          `/ai/generate-tweet-reply`,
+          {
+            tweet_url: topic,
+            choose_sentiment: stance || undefined,
+            additional_context: requirements || undefined,
+          }
         );
 
         setReply(response.data.reply_content);
@@ -42,7 +47,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
       }
     } catch (err) {
       console.log(err);
-      setErrorMessage(err.data.detail);
+      setErrorMessage(err?.response?.data?.detail || "Failed to generate reply.");
     }
   };
 
@@ -71,7 +76,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
   };
 
   return (
-    <div className="h-fit w-full col-span-2  mx-auto bg-white rounded-2xl border-gray-200 border-1">
+    <div className="h-full w-full col-span-2  mx-auto bg-white rounded-2xl border-gray-200 border-1 flex flex-col">
       <div>
         <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
           Generate Reply
@@ -100,7 +105,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
 
           <div>
             <label className=" font-medium mb-2 flex gap-1" htmlFor="stance">
-              Choose Sentiment
+              Choose Sentiment (Optional)
             </label>
             <select
               id="stance"
@@ -141,7 +146,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
               }}
               className="black-btn"
             >
-              Generate Tweet
+              Generate Reply
             </button>
             <button
               onClick={handlePost}
@@ -294,7 +299,16 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
     setTweet("");
     try {
       if (availableCredits > 0) {
-        const response = await apiClient.post(`/ai/generate-tweet`);
+        if (!topic) {
+          setErrorMessage("Topic is required.");
+          setTweetLoading(false);
+          return;
+        }
+        const response = await apiClient.post(`/ai/generate-tweet`, {
+          topic: topic,
+          stance: stance || undefined,
+          additional_requirements: requirements || undefined,
+        });
 
         setTweet(response.data.tweet_content);
 
@@ -310,7 +324,7 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
       }
     } catch (err) {
       console.log(err);
-      setErrorMessage(err.data.detail);
+      setErrorMessage(err?.response?.data?.detail || "Failed to generate tweet.");
     }
   };
 
@@ -336,7 +350,7 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
   };
 
   return (
-    <div className="h-fit w-full col-span-2 mx-auto bg-white rounded-2xl border-gray-200 border-1">
+    <div className="h-full w-full col-span-2 mx-auto bg-white rounded-2xl border-gray-200 border-1 flex flex-col">
       <div>
         <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
           Create New Tweet
@@ -520,7 +534,7 @@ export default function TweetPage({
           initial={{ x: "-50%" }}
           animate={{ x: 0 }}
           transition={{ type: "tween", duration: 0.2 }}
-          className="grid grid-cols-3 w-full gap-8 "
+          className="grid grid-cols-3 w-full gap-8 items-stretch"
         >
           <CreateTweet
             availableCredits={availableCredits}
@@ -536,7 +550,7 @@ export default function TweetPage({
           initial={{ x: "50%" }}
           animate={{ x: 0 }}
           transition={{ type: "tween", duration: 0.2 }}
-          className="grid grid-cols-3 w-full gap-8"
+          className="grid grid-cols-3 w-full gap-8 items-stretch"
         >
           <ReplyTweet
             availableCredits={availableCredits}
@@ -586,7 +600,7 @@ function RecentTweets({ tweetHistory }) {
   }, [tweetHistory]);
 
   return (
-    <div className="w-full h-full max-h-7/10  overflow-y-auto col-span-1 mx-auto bg-white rounded-2xl border-gray-200 border-1 flex flex-col">
+    <div className="w-full h-full col-span-1 mx-auto bg-white rounded-2xl border-gray-200 border-1 flex flex-col overflow-y-auto">
       <div className="flex w-full justify-between items center p-6">
         <h1 className="flex font-medium ">Recent Tweets</h1>
         <div className="text-gray-300">{tweets.length} tweets</div>
