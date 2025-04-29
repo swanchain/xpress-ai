@@ -10,7 +10,7 @@ import asyncio
 from app.database.session import engine, create_tables
 from config import settings, logging_config
 
-from app.api import users, analyze
+from app.api import users, analyze, fine_tuning
 
 
 logging.config.dictConfig(logging_config)
@@ -61,3 +61,5 @@ async def root():
 
 app.include_router(users.router)
 app.include_router(analyze.router)
+app.include_router(fine_tuning.router)
+app.include_router(fine_tuning.router_for_tweets)
