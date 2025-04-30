@@ -20,6 +20,7 @@ export default function Home() {
   const [selectedTab, setSelectedTab] = useState('create')
   const [showModal, setShowModal] = useState(false)
   const [purchaseLoading, setPurchaseLoading] = useState(false)
+  const [purchaseError, setPurchaseError] = useState('')
   const [transactionHash, setTransactionHash] = useState(null)
   const [availableCredits, setAvailableCredits] = useState(null)
   const [tweetHistory, setTweetHistory] = useState([])
@@ -76,6 +77,7 @@ export default function Home() {
   }, [user])
 
   const handlePurchase = async (numTweets) => {
+    setPurchaseError('')
     setTransactionHash('')
     setShowModal(false)
     setPurchaseLoading(true)
@@ -87,6 +89,14 @@ export default function Home() {
 
       const price = await contract.getCreditPrice(numTweets)
 
+      const userBalance = await ethersProvider.getBalance(signer.address)
+
+      console.log(price, userBalance)
+
+      if (userBalance < price) {
+        throw Error('Not enough BNB.')
+      }
+
       const data = await contract.purchaseTweets(user.uuid, numTweets, {
         value: price,
       })
@@ -95,6 +105,7 @@ export default function Home() {
       setTransactionHash(data.hash)
     } catch (err) {
       console.log('err', err)
+      setPurchaseError(err.message)
       setPurchaseLoading(false)
       setShowModal(true)
     }
@@ -173,11 +184,7 @@ export default function Home() {
               <h2 className="font-semibold text-xl">Free</h2>
               <p className="lead font-semibold text-base">5 Tweets</p>
               <p className="m-2 mb-4">$0.00</p>
-              <button
-                onClick={() => handlePurchase(10)}
-                disabled={true}
-                className="black-btn text-base"
-              >
+              <button disabled={true} className="black-btn text-base">
                 Purchase
               </button>
             </div>
@@ -206,6 +213,9 @@ export default function Home() {
               >
                 Purchase
               </button>
+              {purchaseError && (
+                <p className="text-sm text-red-600 mt-2">{purchaseError}</p>
+              )}
             </div>
 
             {/* <div className="flex flex-col justify-center items-center bg-white rounded-[20px] p-8 border-1 border-gray-200">
