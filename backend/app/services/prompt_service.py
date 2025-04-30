@@ -8,10 +8,11 @@ logger = logging.getLogger()
 
 ROLE_KEY_MAPPING = {
     "Category": "category",
-    "Tone Profile": "tone_profile",
+    "Tone Profile": "background_story",
     "Personality Traits": "personality_traits",
-    "Writing Style": "writing_style",
+    "Writing Style": "instruction_set",
 }
+
 
 def create_prompt_for_user_role_data(
     tweets: List[str],
