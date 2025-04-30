@@ -10,7 +10,7 @@ import asyncio
 from app.database.session import engine, create_tables
 from config import settings, logging_config
 
-from app.api import users, analyze, fine_tuning
+from app.api import users, analyze, fine_tuning, ai_vibe
 
 
 logging.config.dictConfig(logging_config)
@@ -61,5 +61,6 @@ async def root():
 
 app.include_router(users.router)
 app.include_router(analyze.router)
+app.include_router(ai_vibe.router)
 app.include_router(fine_tuning.router)
 app.include_router(fine_tuning.router_for_tweets)

@@ -178,7 +178,7 @@ def get_x_tweet_content(
 
 
 async def send_role_to_future_citizen(
-    payload
+    payload: dict
 ):
     # Get bearer token through login
     bearer_token = await get_futurecitizen_bearer_token_async()
@@ -200,3 +200,26 @@ async def send_role_to_future_citizen(
             return str(result['id'])
         except KeyError as e:
             raise ValueError("Role ID not found in API response") from e
+
+
+async def get_role_details_from_future_citizen(
+    ai_role_id: str
+):
+    bearer_token = await get_futurecitizen_bearer_token_async()
+    
+    # Make API call to get role details
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            os.environ['FUTURECITIZEN_GET_USER_ROLE_DETAIL'] + f"/{ai_role_id}",
+            headers={
+                "accept": "application/json",
+                "Authorization": f"Bearer {bearer_token}"
+            }
+        )
+        
+        if response.status_code != 200:
+            logger.error(f"Failed to get role details: {response.text}")
+            return None
+            
+        return response.json()
+        
