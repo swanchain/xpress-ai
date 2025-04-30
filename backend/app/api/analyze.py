@@ -138,13 +138,6 @@ async def generate_tweet_reply(
     role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
     role = await get_role_details_from_future_citizen(role_id)
 
-    reply_content = await get_x_task_reply(
-        role=role,
-        tweet_url=tweet_url,
-        choose_sentiment=choose_sentiment,
-        additional_context=additional_context
-    )
-
     tweet_content = get_x_tweet_content(tweet_url)
 
     payload = create_prompt_input_for_reply_tweet(
