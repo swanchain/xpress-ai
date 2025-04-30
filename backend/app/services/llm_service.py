@@ -54,5 +54,5 @@ async def request_llm(
             return content
         except (KeyError, IndexError) as e:
             logger.error(f"Failed to extract content from LLM response: {str(e)}")
-            raise ValueError("Unexpected API response format") from e
+            raise ValueError("Generate content failed") from e
 

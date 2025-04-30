@@ -73,10 +73,11 @@ async def refresh_my_vibe(
     user: User = Depends(get_current_user)
 ):
     x_user_name = user.x_screen_name
+    x_user_id = user.x_user_id
     max_history_count = 10
     try:
         user_tweets = await get_user_tweets_history(
-            x_user_id=None,
+            x_user_id=x_user_id,
             x_user_name=x_user_name,
             max_history_count=max_history_count
         )
@@ -93,7 +94,15 @@ async def refresh_my_vibe(
         )
 
         role_data = await request_llm(prompt, refresh=True)
+    
+    except Exception as e:
+        logger.error(f"Error getting role data: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get role data. Please try again later"
+        )
 
+    try:
         future_citizen_role_input = create_future_citizen_role_input(
             user_role_data=role_data,
             x_user_id=user.x_user_id,
@@ -107,6 +116,15 @@ async def refresh_my_vibe(
         user.ai_role_id = ai_role_id
         db.add(user)
         await db.commit()
+
+    except Exception as e:
+        logger.error(f"Error sending role to future citizen: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save role. Please try again later"
+        )
+
+    try:
 
         role_details = await get_role_details_from_future_citizen(
             ai_role_id=ai_role_id
