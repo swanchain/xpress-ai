@@ -49,8 +49,8 @@ async def request_llm(
         try:
             content = result["choices"][0]["message"]["content"]
 
-            cache.set(payload_hash_key(payload), content)
-            
+            cache[payload_hash_key(payload)] = content
+
             return content
         except (KeyError, IndexError) as e:
             logger.error(f"Failed to extract content from LLM response: {str(e)}")
