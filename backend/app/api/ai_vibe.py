@@ -95,7 +95,9 @@ async def refresh_my_vibe(
         role_data = await request_llm(prompt, refresh=True)
 
         future_citizen_role_input = create_future_citizen_role_input(
-            user_role_data=role_data
+            user_role_data=role_data,
+            x_user_id=user.x_user_id,
+            x_user_name=x_user_name,
         )
 
         ai_role_id = await send_role_to_future_citizen(
