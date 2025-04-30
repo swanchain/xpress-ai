@@ -6,6 +6,13 @@ import logging
 logger = logging.getLogger()
 
 
+ROLE_KEY_MAPPING = {
+    "Category": "category",
+    "Tone Profile": "tone_profile",
+    "Personality Traits": "personality_traits",
+    "Writing Style": "writing_style",
+}
+
 def create_prompt_for_user_role_data(
     tweets: List[str],
 ) -> str: 
@@ -14,7 +21,25 @@ def create_prompt_for_user_role_data(
         "messages": [
             {
                 "role": "system",
-                "content": "Please generate the AI role information for the user based on the user's Twitter historical records. This AI role is intended to help the user generate tweets or tweet replies that are more in line with his personality and tone. In other words, this AI role aims to describe as accurately as possible through a series of parameters what kind of person this user is from an AI perspective. I will provide examples when possible. You need to imitate the format, but there is no need to imitate the content.\nCategory,(string):e.g.\"Developer and Technology Enthusiast/ AI Blockchain Ambassador\"\nSystem Prompt,(string):e.g.\"You are a app developer, the charismatic global ambassador for SwanChain, a Layer 2 AI computing blockchain. Your mission is to educate, inspire, and onboard users to embrace SwanChain's innovative ecosystem, which integrates AI and blockchain technology. You communicate with authority, passion, and clarity, making even complex concepts accessible and exciting. You embody the values of decentralization, innovation, and global collaboration.Avoid using hashtags in your communication. Communicate clearly and professionally without social media-style tagging.\"\nPersonality Traits:(json):e.g.\"{\"traits\": [\"Charismatic\",\"Strategic\",\"Visionary\",\"Approachable\",\"Persuasive\",\"Empathetic\",\"Knowledgeable\",\"Optimistic\"]} \"\nBackground Story:(string):e.g.\"<User Name>, a seasoned blockchain expert and entrepreneur, brings years of experience working in the crypto space. Inspired by the vision of decentralization, he became an early adopter of AI-integrated blockchain technologies. Longpengs expertise spans decentralized finance (DeFi), layer-2 scalability solutions, and AI computing. Having worked closely with global organizations, he is committed to bridging the gap between technical innovation and real-world applications. As SwanChain's ambassador, he passionately advocates for its transformative potential in reducing computing costs and empowering communities globally.\"\nInstruction Set:(json):e.g.\"{\"instructions\":[{\"instruction\":\"Explain SwanChain's core features clearly and persuasively.\"},{\"instruction\":\"Use a friendly yet authoritative tone to engage diverse audiences.\"},{\"instruction\":\"Inspire users to join SwanChain through compelling examples and success stories.\"},{\"instruction\":\"Break down complex technical concepts into simple,digestible terms.\"},{\"instruction\":\"Promote SwanChain's partnerships and unique features like LagrangeDAO.\"},{\"instruction\":\"Encourage developers,investors,and users to participate in SwanChain's ecosystem.\"},{\"instruction\":\"Do not use hashtags in generated content.\"}]}\"\nLanguage:(string):e.g.\"English\"\nExample Conversations:(json):e.g.\"{\"conversation_1\":{\"user\":\"What is SwanChain, and why should I care?\",\"assistant\":\"SwanChain is a Layer 2 AI computing blockchain that merges blockchain and AI to create scalable, decentralized computing solutions. By reducing computing costs by up to 70% and monetizing dormant resources, SwanChain empowers developers, businesses, and communities to innovate without financial constraints. Its the future of decentralized AI!\"},{\"conversation_2\":{\"user\":\"How does SwanChain benefit developers?\",\"assistant\":\"Developers benefit immensely from SwanChains decentralized marketplace, which provides affordable computing power and tools for AI model deployment. Plus, its partnerships with Nvidia, Google, and Filecoin ensure cutting-edge technology and robust support.\"},\"conversation_3\":{\"user\":\"Can SwanChain really make a global impact?\",\"assistant\":\"Absolutely! SwanChains ability to leverage underutilized computing power and integrate AI means it can democratize access to advanced technologies, enabling innovation in areas like healthcare, finance, and education worldwide.\"}}\"\nKnowledge Base:(json):e.g.\"{\"knowledge_1\":{\"topic\":\"SwanChain Overview\",\"content\":\"SwanChain is a Layer 2 blockchain that integrates AI and decentralized computing. It offers solutions for storage, computing, bandwidth, and payments, leveraging underutilized resources globally.\"},{\"knowledge_2\":{\"topic\":\"Core Features\",\"content\":\"SwanChain provides scalable decentralized computing, up to 70% cost reduction, LagrangeDAO for AI deployment, and monetization of dormant resources.\"},{\"knowledge_3\":{\"topic\":\"Partnerships\",\"content\":\"SwanChain collaborates with Nvidia, Google Web3 Startup Program, Microsoft Startup Program, Chainlink BUILD, and Filecoin Orbit.\"},{\"knowledge_4\":{\"topic\":\"User Benefits\",\"content\":\"Users gain access to affordable AI computing, decentralized storage, and a robust community marketplace for innovation and collaboration.\"},{\"knowledge_5\":{\"topic\":\"Global Community\",\"content\":\"SwanChain supports a global network of 2000+ computing providers in 120 locations and has achieved 10M user addresses with 1M daily transactions.\"}"
+                "content": '''
+Analyze the provided Twitter history to create a comprehensive AI role profile that captures this user's authentic voice and personality. This profile will help generate tweets and replies that genuinely reflect the user's unique style, tone, and interests.
+
+Focus on identifying patterns in how they express themselves - their general communication style rather than specific content topics. Observe their overall language preferences, emotional tone, engagement style, and distinctive writing characteristics.
+
+Please provide the following information:
+
+Category: (string) A brief label that captures the user's overall online persona (e.g., "Tech Enthusiast with Critical Perspective")
+
+Tone Profile: (string) A paragraph describing the user's typical communication style, emotional tone, and how they engage with others (e.g., "Communicates with analytical precision while maintaining accessibility. Balances technical insights with conversational warmth. Often uses thoughtful questions to engage followers.")
+
+Personality Traits: (json) A list of 5-8 key personality traits evident in the user's communication style
+```json
+{"traits": ["trait1", "trait2", "trait3", "trait4", "trait5"]}
+
+Writing Style: (json) A list of 5-8 key personality traits evident in the user's writing style
+```json
+{"traits": ["trait1", "trait2", "trait3", "trait4", "trait5"]}
+                    '''
             },
             {
                 "role": "user",
@@ -39,13 +64,9 @@ def create_future_citizen_role_input(
     # Define the keywords we want to extract
     keywords = [
         "Category",
-        "System Prompt",
+        "Tone Profile",
         "Personality Traits",
-        "Background Story",
-        "Instruction Set",
-        "Language",
-        "Example Conversations",
-        "Knowledge Base"
+        "Writing Style",
     ]
 
     # Helper function to extract content for a keyword
@@ -81,19 +102,42 @@ def create_future_citizen_role_input(
     role_input = {
         "name": f"{x_user_name}-{x_user_id}",
         "model_name": "meta-llama/Llama-3.3-70B-Instruct",
-        "system_prompt": extracted_data["System Prompt"],
-        "personality_traits": [json.dumps(parse_json_content(extracted_data["Personality Traits"], {"traits": []}))],
-        "background_story": extracted_data["Background Story"],
-        "instruction_set": [json.dumps(parse_json_content(extracted_data["Instruction Set"], {"instructions": []}))],
+        "system_prompt": "",
+        # Personality Traits
+        ROLE_KEY_MAPPING["Personality Traits"]: [json.dumps(parse_json_content(extracted_data["Personality Traits"], {"traits": []}))],
+        # Tone Profile
+        ROLE_KEY_MAPPING["Tone Profile"]: extracted_data["Tone Profile"],   
+        # Writing Style
+        ROLE_KEY_MAPPING["Writing Style"]: [json.dumps(parse_json_content(extracted_data["Writing Style"], {"traits": []}))], 
         "version": "1.0",
-        "knowledge_base": parse_json_content(extracted_data["Knowledge Base"], {}),
-        "example_conversations": parse_json_content(extracted_data["Example Conversations"], {}),
-        "category": extracted_data["Category"],
-        "language": extracted_data["Language"] or "English"
+        "knowledge_base": {},
+        "example_conversations": {},
+        # Category
+        ROLE_KEY_MAPPING["Category"]: extracted_data["Category"],
+        "language": ""
     }
 
     return role_input
 
+def extract_tone_from_role(role: dict):
+    category = role.get(ROLE_KEY_MAPPING["Category"], '')
+    tone_profile = role.get(ROLE_KEY_MAPPING["Tone Profile"], '')
+    try:
+        personality_traits = ', '.join(json.loads(role.get(ROLE_KEY_MAPPING["Personality Traits"])[0]).get('traits', []))
+    except:
+        personality_traits = ""
+
+    try:
+        writing_style = ', '.join(json.loads(role.get(ROLE_KEY_MAPPING["Writing Style"])[0]).get('traits', []))
+    except:
+        writing_style = ""
+
+    return f"""
+    Category: {category}
+    Tone Profile: {tone_profile}
+    Personality Traits: {personality_traits}
+    Writing Style: {writing_style}
+    """
 
 def create_prompt_input_for_tweet(
     role: dict,
@@ -101,28 +145,32 @@ def create_prompt_input_for_tweet(
     stance: Optional[str] = None,
     additional_requirements: Optional[str] = None
 ):
-    
-    # Build system prompt
-    system_prompt = (
-        f"You are an AI assistant with the following configuration:\n"
-        f"Name: {role.get('name', '')}\n"
-        f"System Prompt: {role.get('system_prompt', '')}\n"
-        f"Personality Traits: {', '.join(role.get('personality_traits', []))}\n"
-        f"Background Story: {role.get('background_story', '')}\n"
-        f"Category: {role.get('category', '')}\n"
-        f"Language: {role.get('language', '')}\n\n"
-        "You should build your personality framework with the above configuration and generate content according to the user's requirements."
-        "Please respond in character, maintaining consistency with your configuration. "
-        "Keep responses natural and engaging while staying true to your character."
-        "The above configuration is just your personality framework, you should imitate the tone of voice through these personality frameworks, character, your answer does not need to be completely consistent with the config here, especially when the user's topic does not match his personality framework, you should try to imitate the user's tone of voice to generate content that matches the topic"
-    )
+    tone_prompt = extract_tone_from_role(role)
+
+    system_prompt = f"""
+You are an AI that writes in the unique voice and style of this specific Twitter user. Your goal is to generate content that sounds authentically like them, regardless of the topic.
+
+USER VOICE PROFILE:
+{tone_prompt}
+
+IMPORTANT INSTRUCTIONS:
+1. Focus primarily on MIMICKING THE USER'S WRITING STYLE, not their typical topics
+2. Apply their distinctive communication patterns regardless of subject matter
+3. Your task is to write as if this person were writing about the requested topic
+4. Do not try to redirect toward topics mentioned in their profile
+5. Accept that people discuss diverse topics outside their usual interests
+6. Maintain their authentic voice (tone, humor style, sentence structure, word choice) while addressing ANY topic requested
+
+Write a tweet or reply that this specific user might post, focusing on capturing their authentic voice while addressing the requested topic. The content should feel natural coming from them, even if the topic is different from what they typically discuss.
+"""
 
     # Compose user prompt
-    user_prompt = (
-        f"Please generate a piece of content that can be sent to social media, with the TOPIC of the content being {topic},"
-        f"the EMOTION of the content is {stance if stance else 'no specific emotion'},"
-        f"the ADDITIONAL REQUIREMENTS of the content are {additional_requirements if additional_requirements else 'none' }."
-    )
+    user_prompt = f"""
+CONTENT REQUEST:
+Topic: {topic}
+Emotional Tone: {stance if stance else "maintain user's natural tone"}
+Additional Requirements: {additional_requirements if additional_requirements else 'none'}
+"""
 
     payload = {
         "messages": [
@@ -151,27 +199,31 @@ def create_prompt_input_for_reply_tweet(
     choose_sentiment: Optional[str] = None,
     additional_context: Optional[str] = None,
 ):
-    # Build system prompt (same as generate-tweet)
-    system_prompt = (
-        f"You are an AI assistant with the following configuration:\n"
-        f"Name: {role.get('name', '')}\n"
-        f"System Prompt: {role.get('system_prompt', '')}\n"
-        f"Personality Traits: {', '.join(role.get('personality_traits', []))}\n"
-        f"Background Story: {role.get('background_story', '')}\n"
-        f"Category: {role.get('category', '')}\n"
-        f"Language: {role.get('language', '')}\n\n"
-        "You should build your personality framework with the above configuration and generate content according to the user's requirements."
-        "Please respond in character, maintaining consistency with your configuration. "
-        "Keep responses natural and engaging while staying true to your character."
-        "The above configuration is just your personality framework, you should imitate the tone of voice through these personality frameworks, character, your answer does not need to be completely consistent with the config here, especially when the user's topic does not match his personality framework, you should try to imitate the user's tone of voice to generate content that matches the topic"
-    )
+    tone_prompt = extract_tone_from_role(role)
 
-    # Compose user prompt for reply
-    user_prompt = (
-        f"Please write a reply to the following tweet: '{tweet_content}'. "
-        f"The sentiment of your reply should be: {choose_sentiment if choose_sentiment else 'no specific sentiment'}. "
-        f"Additional context for your reply: {additional_context if additional_context else 'none'}."
-    )
+    system_prompt = f"""
+    You are an AI that crafts Twitter replies in the exact voice and communication style of a specific user. Your goal is to create responses that sound authentically like them, regardless of the tweet topic you're responding to.
+
+USER VOICE PROFILE:
+{tone_prompt}
+
+KEY INSTRUCTIONS:
+1. Focus on REPLICATING HOW THIS USER COMMUNICATES, not what topics they typically discuss
+2. Apply their characteristic writing style, word choice, and sentence structure to any reply
+3. Maintain their typical level of formality/informality, humor style, and engagement approach
+4. Do not force connections to topics mentioned in their profile if irrelevant to the conversation
+5. Remember that authentic people respond naturally to all kinds of topics, even ones outside their usual interests
+6. If they typically use specific rhetorical devices (questions, data points, humor), incorporate these when appropriate
+
+Write a reply tweet that this specific person would likely post, focusing on capturing their authentic voice and communication style. The reply should feel like it genuinely came from them, addressing the tweet's content directly while maintaining their distinctive communication patterns.
+"""
+    
+    user_prompt = f"""
+REPLY REQUEST:
+Tweet to Reply to: {tweet_content}
+Desired Sentiment: {choose_sentiment if choose_sentiment else "maintain user's natural response style"}
+Additional Context: {additional_context if additional_context else 'none'}
+"""
 
     payload = {
         "messages": [
