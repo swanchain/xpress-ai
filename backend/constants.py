@@ -12,3 +12,5 @@ X_TWEET_POST_INFO_API = "https://api.twitter.com/2/tweets/{}?tweet.fields=conver
 
 GENERATE_TYPE_TWEET = 'tweet'
 GENERATE_TYPE_REPLY = 'reply'
+
+CACHE_TTL = 600

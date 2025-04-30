@@ -1,13 +1,22 @@
 import httpx
 import logging
-
+import os
 import requests
 from fastapi import HTTPException
 from constants import X_TWEET_POST_INFO_API
+from constants import CACHE_TTL
+from cachetools import TTLCache
+from asyncache import cached
+
+from dotenv import load_dotenv
 
 from config import settings
 
+load_dotenv()
+
 logger = logging.getLogger()
+
+cache = TTLCache(maxsize=1000, ttl=CACHE_TTL)
 
 def get_futurecitizen_bearer_token():
     futurecitizen_x_api = settings.FUTURECITIZEN_LOGIN_API
@@ -142,7 +151,7 @@ async def get_x_task_reply(
     
     return data['replies'][0]['content']
 
-
+@cached(cache)
 def get_x_tweet_content(
     tweet_url: str
 ):
@@ -166,3 +175,28 @@ def get_x_tweet_content(
 
     data = response.json()
     return data['tweet_content']
+
+
+async def send_role_to_future_citizen(
+    payload
+):
+    # Get bearer token through login
+    bearer_token = await get_futurecitizen_bearer_token_async()
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            os.environ['FUTURECITIZEN_CREATE_ROLE_API'],
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {bearer_token}",
+                "accept": "application/json, text/plain, */*"
+            }
+        )
+        response.raise_for_status()
+        result = response.json()
+        
+        try:
+            return str(result['id'])
+        except KeyError as e:
+            raise ValueError("Role ID not found in API response") from e
