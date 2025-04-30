@@ -81,7 +81,7 @@ async def generate_tweet(
         additional_requirements=additional_requirements
     )
 
-    tweet_content = await request_llm(payload)
+    tweet_content = await request_llm(payload, refresh=True)
 
     # update user credit
     user.total_generated = user.total_generated + 1
@@ -154,7 +154,7 @@ async def generate_tweet_reply(
         additional_context=additional_context
     )
 
-    reply_content = await request_llm(payload)
+    reply_content = await request_llm(payload, refresh=True)
 
     # update user credit
     user.total_generated = user.total_generated + 1
