@@ -12,6 +12,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleGenerate = async () => {
+    setErrorMessage("");
     setReply("");
     try {
       if (availableCredits <= 0) {
@@ -60,7 +61,8 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
     } catch (err) {
       console.log(err);
       setErrorMessage(
-        err?.response?.data?.detail || "Failed to generate reply."
+        err?.response?.data?.detail ||
+          "Failed to generate reply. Please try again later."
       );
     }
   };
@@ -179,8 +181,9 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
             : "opacity-0 pointer-events-none"
         }`}
         onClick={() => {
-          if (reply) {
+          if (reply || errorMessage) {
             setTweetLoading(false);
+            setErrorMessage("");
             setReply("");
           }
         }}
@@ -250,6 +253,8 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
                 </button>
               </div>
             </>
+          ) : errorMessage ? (
+            <div>{errorMessage}</div>
           ) : (
             <>
               <div className="flex flex-row items-center gap-2 my-4">
@@ -310,6 +315,7 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleGenerate = async () => {
+    setErrorMessage("");
     setTweet("");
     try {
       if (availableCredits <= 0) {
@@ -348,7 +354,8 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
     } catch (err) {
       console.log(err);
       setErrorMessage(
-        err?.response?.data?.detail || "Failed to generate tweet."
+        err?.response?.data?.detail ||
+          "Failed to generate tweet. Please try again later."
       );
     }
   };
@@ -461,7 +468,8 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
             : "opacity-0 pointer-events-none"
         }`}
         onClick={() => {
-          if (tweet) {
+          if (tweet || errorMessage) {
+            setErrorMessage("");
             setTweetLoading(false);
             setTweet("");
           }
@@ -500,6 +508,8 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
                 </button>
               </div>
             </>
+          ) : errorMessage ? (
+            <div>{errorMessage}</div>
           ) : (
             <>
               <div className="flex flex-row items-center gap-2 my-4">
