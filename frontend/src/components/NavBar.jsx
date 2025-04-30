@@ -169,7 +169,7 @@ export default function Navbar({
               <CloseIcon />
             </div>
           </div>
-          <div>
+          {/* <div>
             <h1 className="font-semibold text-xl">Name</h1>
             <p className="py-2">{aiDetails.name || ""}</p>
           </div>
@@ -177,7 +177,7 @@ export default function Navbar({
           <div>
             <h1 className="font-semibold text-xl">Model</h1>
             <p className="py-2">{aiDetails.model_name || ""}</p>
-          </div>
+          </div> */}
 
           <div>
             <h1 className="font-semibold text-xl">Personality Traits</h1>
@@ -212,6 +212,10 @@ export default function Navbar({
           <div>
             <h1 className="font-semibold text-xl">Language</h1>
             <p className="py-2">{aiDetails.language || ""}</p>
+          </div>
+
+          <div className="flex items-center justify-end">
+            <button className="black-btn">Refresh My Vibe</button>
           </div>
         </div>
       </div>
