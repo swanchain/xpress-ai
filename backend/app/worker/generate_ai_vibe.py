@@ -44,7 +44,7 @@ async def update_user_ai_role():
                         tweets=user_tweets
                     )
 
-                    role_data = await request_llm(prompt, refresh=True)
+                    role_data = await request_llm(prompt)
 
                     future_citizen_role_input = create_future_citizen_role_input(
                         user_role_data=role_data,

@@ -59,13 +59,15 @@ logger = logging.getLogger()
 
 @router.post("/generate-tweet", response_model=dict)
 async def generate_tweet(
+    request: Request,
     topic: str = Form(...),
     stance: Optional[str] = Form(None),
     additional_requirements: Optional[str] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not check_credits_enough(user):
+    redis_client = request.app.state.redis
+    if not await check_credits_enough(user, redis_client):
         raise HTTPException(
             status_code=400, 
             detail="Not enough credits"
@@ -81,7 +83,7 @@ async def generate_tweet(
         additional_requirements=additional_requirements
     )
 
-    tweet_content = await request_llm(payload, refresh=True)
+    tweet_content = await request_llm(payload)
 
     # update user credit
     user.total_generated = user.total_generated + 1
@@ -110,11 +112,16 @@ async def generate_tweet(
 
 @router.post("/get-tweet-content", response_model=dict)
 async def get_tweet_content(
+    request: Request,
     tweet_url: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    content = get_x_tweet_content(tweet_url)
+    content = get_x_tweet_content(
+        tweet_url=tweet_url,
+        redis_client=request.app.state.redis
+    )
+    
     return {
         "status": "Get tweet content successfully",
         "tweet_content": content
@@ -123,13 +130,15 @@ async def get_tweet_content(
 
 @router.post("/generate-tweet-reply", response_model=dict)
 async def generate_tweet_reply(
+    request: Request,
     tweet_url: str = Form(...),
     choose_sentiment: Optional[str] = Form(None),
     additional_context: Optional[str] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not check_credits_enough(user):
+    redis_client = request.app.state.redis
+    if not await check_credits_enough(user, redis_client):
         raise HTTPException(
             status_code=400, 
             detail="Not enough credits"
@@ -138,7 +147,10 @@ async def generate_tweet_reply(
     role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
     role = await get_role_details_from_future_citizen(role_id)
 
-    tweet_content = get_x_tweet_content(tweet_url)
+    tweet_content = get_x_tweet_content(
+        tweet_url=tweet_url,
+        redis_client=request.app.state.redis
+    )
 
     payload = create_prompt_input_for_reply_tweet(
         role=role,
@@ -147,7 +159,7 @@ async def generate_tweet_reply(
         additional_context=additional_context
     )
 
-    reply_content = await request_llm(payload, refresh=True)
+    reply_content = await request_llm(payload)
 
     # update user credit
     user.total_generated = user.total_generated + 1

@@ -2,10 +2,9 @@ import os
 import httpx
 import logging
 from dotenv import load_dotenv
-from cachetools import TTLCache
-from asyncache import cached
 from cachetools.keys import hashkey
 import hashlib
+from redis.asyncio import Redis
 import json
 from constants import CACHE_TTL
 
@@ -14,21 +13,19 @@ load_dotenv()
 logger = logging.getLogger()
 
 
-cache = TTLCache(maxsize=1000, ttl=CACHE_TTL)
 
-
-def payload_hash_key(payload):
+def payload_hash_key(payload: dict) -> str:
     payload_str = json.dumps(payload, sort_keys=True)
-    return hashkey(hashlib.sha256(payload_str.encode()).hexdigest())
+    return hashlib.sha256(payload_str.encode()).hexdigest()
 
 
-# @cached(cache, key=payload_hash_key)
 async def request_llm(
     payload: dict,
-    refresh: bool = False
+    redis_client: Redis = None,
 ) -> str:
-    if not refresh:
-        cached_response = cache.get(payload_hash_key(payload))
+    key = payload_hash_key(payload)
+    if redis_client:
+        cached_response = await redis_client.get(key)
         if cached_response is not None:
             return cached_response
 
@@ -48,8 +45,9 @@ async def request_llm(
         
         try:
             content = result["choices"][0]["message"]["content"]
-
-            cache[payload_hash_key(payload)] = content
+            
+            if redis_client:
+                await redis_client.setex(key, CACHE_TTL, content)
 
             return content
         except (KeyError, IndexError) as e:

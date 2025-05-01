@@ -7,6 +7,7 @@ import logging
 import logging.config
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
+from redis.asyncio import from_url
 # from app.database.session import engine, create_tables
 from config import settings, logging_config
 
@@ -33,9 +34,12 @@ scheduler.add_job(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # await create_tables()
+    redis_client = await from_url(settings.REDIS_URL, decode_responses=True)
+    app.state.redis = redis_client
     scheduler.start()
     yield
     scheduler.shutdown()
+    await redis_client.close()
 
 
 app = FastAPI(lifespan=lifespan, title="XPressAI API")

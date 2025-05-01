@@ -9,6 +9,7 @@ from datetime import timedelta, datetime, timezone
 from typing import Annotated, List, Dict, Optional
 from urllib.parse import urlencode, urljoin
 import os
+from redis.asyncio import Redis
 
 from eth_account.messages import encode_defunct
 from fastapi import APIRouter, Form, Depends, HTTPException, status, Request
@@ -32,18 +33,6 @@ from app.schemas.user import (
     WalletSignatureLogin
 )
 from app.models.user import User
-from app.models.history import GenerateHistory
-from app.models.reference import PromptReference
-from app.services.api_service import (
-    get_futurecitizen_bearer_token,
-    get_x_task_reply,
-    get_ai_role_id,
-    get_x_tweet_id,
-    get_x_tweet_content
-)
-from app.services.credit_service import check_credits_enough
-from app.services.user_service import UserService
-
 
 from app.services.x_service import (
     get_user_tweets_history
@@ -61,6 +50,7 @@ from app.services.api_service import (
     send_role_to_future_citizen,
     get_role_details_from_future_citizen
 )
+from app.tasks.ai_vibe import refresh_user_vibe_task
 
 router = APIRouter(prefix="/ai-vibe", tags=["AI Vibe"])
 
@@ -93,7 +83,7 @@ async def refresh_my_vibe(
             tweets=user_tweets
         )
 
-        role_data = await request_llm(prompt, refresh=True)
+        role_data = await request_llm(prompt)
     
     except Exception as e:
         logger.error(f"Error getting role data: {str(e)}")
@@ -145,50 +135,18 @@ async def refresh_my_vibe(
         )
 
 
-
-async def process_refresh_my_vibe(user: User, db: AsyncSession):
-    x_user_name = user.x_screen_name
-    x_user_id = user.x_user_id
-    max_history_count = 10
-
-    try:
-        user_tweets = await get_user_tweets_history(
-            x_user_id=x_user_id,
-            x_user_name=x_user_name,
-            max_history_count=max_history_count
-        )
-    except Exception as e:
-        logger.error(f"X API error: {str(e)}")
-        return
-
-    try:
-        prompt = create_prompt_for_user_role_data(tweets=user_tweets)
-        role_data = await request_llm(prompt, refresh=True)
-    except Exception as e:
-        logger.error(f"LLM error: {str(e)}")
-        return
-
-    try:
-        future_citizen_role_input = create_future_citizen_role_input(
-            user_role_data=role_data,
-            x_user_id=x_user_id,
-            x_user_name=x_user_name,
-        )
-        ai_role_id = await send_role_to_future_citizen(payload=future_citizen_role_input)
-        user.ai_role_id = ai_role_id
-        db.add(user)
-        await db.commit()
-    except Exception as e:
-        logger.error(f"FutureCitizen error: {str(e)}")
-        return
-
-
 @router.post('/refresh-my-vibe-async')
 async def refresh_my_vibe_background(
-    background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    background_tasks.add_task(process_refresh_my_vibe, user, db)
-    
+    refresh_user_vibe_task.delay(user.id)
+    return {"detail": "AI Character refresh started. Please check back later."}
+
+
+
+@router.post('/refresh-my-vibe-async-test')
+async def refresh_my_vibe_background_(
+    user_id: int
+):
+    refresh_user_vibe_task.delay(user_id)
     return {"detail": "AI Character refresh started. Please check back later."}

@@ -6,7 +6,8 @@ from fastapi import HTTPException
 from constants import X_TWEET_POST_INFO_API
 from constants import CACHE_TTL
 from cachetools import TTLCache
-from asyncache import cached
+# from asyncache import cached
+from redis.asyncio import Redis
 
 from dotenv import load_dotenv
 
@@ -151,30 +152,43 @@ async def get_x_task_reply(
     
     return data['replies'][0]['content']
 
-@cached(cache)
-def get_x_tweet_content(
-    tweet_url: str
+# @cached(cache)
+async def get_x_tweet_content(
+    tweet_url: str,
+    redis_client: Redis = None
 ):
+    tweet_content_key = f"tweet_content:{tweet_url}"
+    if redis_client:
+        data = await redis_client.get(tweet_content_key)
+        if data:
+            return data
+        
     futurecitizen_x_api = settings.FUTURECITIZEN_X_TWEET_CONTENT_API
     futurecitizen_bear_token = get_futurecitizen_bearer_token()
     
-    response = requests.post(
-        futurecitizen_x_api,
-        headers={
-            "accept": "application/json",
-            "Authorization": f"Bearer {futurecitizen_bear_token}"
-        },
-        json={
-            "tweet_url": tweet_url,
-            "twitter_account_id": 0
-        }
-    )
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            futurecitizen_x_api,
+            headers={
+                "accept": "application/json",
+                "Authorization": f"Bearer {futurecitizen_bear_token}"
+            },
+            json={
+                "tweet_url": tweet_url,
+                "twitter_account_id": 0
+            }
+        )
 
     if response.status_code != 200:
         raise HTTPException(status_code=400, detail="Failed to get tweet content, please check the tweet url")
 
     data = response.json()
-    return data['tweet_content']
+    content = data['tweet_content']
+
+    if redis_client and content:
+        await redis_client.setex(tweet_content_key, 300, content)
+
+    return content
 
 
 async def send_role_to_future_citizen(
