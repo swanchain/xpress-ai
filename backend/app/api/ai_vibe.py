@@ -142,11 +142,3 @@ async def refresh_my_vibe_background(
     refresh_user_vibe_task.delay(user.id)
     return {"detail": "AI Character refresh started. Please check back later."}
 
-
-
-@router.post('/refresh-my-vibe-async-test')
-async def refresh_my_vibe_background_(
-    user_id: int
-):
-    refresh_user_vibe_task.delay(user_id)
-    return {"detail": "AI Character refresh started. Please check back later."}

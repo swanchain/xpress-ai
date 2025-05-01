@@ -117,7 +117,7 @@ async def get_tweet_content(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    content = get_x_tweet_content(
+    content = await get_x_tweet_content(
         tweet_url=tweet_url,
         redis_client=request.app.state.redis
     )
@@ -147,7 +147,7 @@ async def generate_tweet_reply(
     role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
     role = await get_role_details_from_future_citizen(role_id)
 
-    tweet_content = get_x_tweet_content(
+    tweet_content = await get_x_tweet_content(
         tweet_url=tweet_url,
         redis_client=request.app.state.redis
     )

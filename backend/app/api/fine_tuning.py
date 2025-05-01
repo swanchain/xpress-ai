@@ -280,7 +280,7 @@ async def preview_prompt_for_reply_tweet(
 
     # for demo only, so no role saving
 
-    tweet_content = get_x_tweet_content(
+    tweet_content = await get_x_tweet_content(
         tweet_url=tweet_url,
         redis_client=request.app.state.redis
     )
@@ -330,7 +330,7 @@ async def request_llm_for_reply_tweet(
 
     # for demo only, so no role saving
 
-    tweet_content = get_x_tweet_content(
+    tweet_content = await get_x_tweet_content(
         tweet_url=tweet_url,
         redis_client=request.app.state.redis
     )
