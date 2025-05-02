@@ -14,3 +14,7 @@ GENERATE_TYPE_TWEET = 'tweet'
 GENERATE_TYPE_REPLY = 'reply'
 
 CACHE_TTL = 600
+
+ALL_AVAILABLE_MODEL_NAMES = [
+    "meta-llama/Llama-3.3-70B-Instruct",
+]
