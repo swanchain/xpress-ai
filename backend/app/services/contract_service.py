@@ -38,7 +38,10 @@ async def get_total_credits(uuid: str, redis: Redis):
     if redis:
       total_credits = await redis.get(uuid)
       if total_credits:
-          return total_credits
+          try:
+              return int(total_credits)
+          except:
+              pass
     total_credits = contract.functions.getTotalCredits(uuid).call()
     if redis:
        await redis.setex(uuid, 30, total_credits)
