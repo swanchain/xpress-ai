@@ -2,9 +2,17 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/services/apiClient";
 
-function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
+function ReplyTweet({
+  availableCredits,
+  getUser,
+  getTweetHistory,
+  availableModels,
+}) {
   const [url, setUrl] = useState("");
   const [stance, setStance] = useState("");
+  const [model, setModel] = useState(
+    availableModels.length > 0 ? availableModels[0] : ""
+  );
   const [requirements, setRequirements] = useState("");
   const [tweetLoading, setTweetLoading] = useState(false);
   const [op, setOp] = useState("");
@@ -40,6 +48,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
       const formData = new FormData();
       formData.append("tweet_url", url);
       if (stance) formData.append("choose_sentiment", stance);
+      if (model) formData.append("model_name", model);
       if (requirements) formData.append("additional_context", requirements);
 
       const response = await apiClient.post(
@@ -117,6 +126,24 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
                 {errorMessage}
               </label>
             )}
+          </div>
+
+          <div>
+            <label className=" font-medium mb-2 flex gap-1" htmlFor="stance">
+              Model
+            </label>
+            <select
+              id="ai-model"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
+              value={stance}
+              onChange={(e) => setModel(e.target.value)}
+            >
+              {availableModels.map((modelName) => (
+                <option key={modelName} value={modelName}>
+                  {modelName}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -306,9 +333,17 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
   );
 }
 
-function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
+function CreateTweet({
+  availableCredits,
+  getUser,
+  getTweetHistory,
+  availableModels,
+}) {
   const [topic, setTopic] = useState("");
   const [stance, setStance] = useState("");
+  const [model, setModel] = useState(
+    availableModels.length > 0 ? availableModels[0] : ""
+  );
   const [requirements, setRequirements] = useState("");
   const [tweetLoading, setTweetLoading] = useState(false);
   const [tweet, setTweet] = useState("");
@@ -335,6 +370,7 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
       const formData = new FormData();
       formData.append("topic", topic);
       if (stance) formData.append("stance", stance);
+      if (model) formData.append("model_name", model);
       if (requirements)
         formData.append("additional_requirements", requirements);
 
@@ -407,6 +443,24 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
                 {errorMessage}
               </label>
             )}
+          </div>
+
+          <div>
+            <label className=" font-medium mb-2 flex gap-1" htmlFor="stance">
+              Model
+            </label>
+            <select
+              id="ai-model"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
+              value={stance}
+              onChange={(e) => setModel(e.target.value)}
+            >
+              {availableModels.map((modelName) => (
+                <option key={modelName} value={modelName}>
+                  {modelName}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -568,6 +622,17 @@ export default function TweetPage({
   tweetHistory,
   getTweetHistory,
 }) {
+  const [availableModels, setAvailableModels] = useState([]);
+
+  useEffect(() => {
+    fetchAIModels();
+  }, []);
+
+  async function fetchAIModels() {
+    const response = await apiClient.get("/ai/get-all-available-model-names");
+    setAvailableModels(response.data.model_names);
+  }
+
   return (
     <div className="lg:min-w-2/3 lg:max-w-2/3  mx-auto rounded-2xl flex mt-20">
       {selectedTab === "create" && (
@@ -582,6 +647,7 @@ export default function TweetPage({
             availableCredits={availableCredits}
             getUser={getUser}
             getTweetHistory={getTweetHistory}
+            availableModels={availableModels}
           />
           <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>
@@ -598,6 +664,7 @@ export default function TweetPage({
             availableCredits={availableCredits}
             getUser={getUser}
             getTweetHistory={getTweetHistory}
+            availableModels={availableModels}
           />
           <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>
