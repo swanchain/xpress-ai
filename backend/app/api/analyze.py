@@ -88,6 +88,9 @@ async def generate_tweet(
             detail="Model name not supported"
         )
 
+    if not model_name:
+        model_name = "meta-llama/Llama-3.3-70B-Instruct"
+
     role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
     role = await get_role_details_from_future_citizen(
         ai_role_id=role_id,
@@ -169,6 +172,9 @@ async def generate_tweet_reply(
             status_code=400, 
             detail="Model name not supported"
         )
+    
+    if not model_name:
+        model_name = "meta-llama/Llama-3.3-70B-Instruct"
 
     role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
     role = await get_role_details_from_future_citizen(
