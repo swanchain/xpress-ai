@@ -46,13 +46,15 @@ logger = logging.getLogger()
 
 @router.get("/x-user-tweets-history", response_model=dict)
 async def get_x_user_tweets_history(
+    request: Request,
     x_user_name: str,
     max_history_count: Optional[int] = 10
 ):
     user_tweets = await get_user_tweets_history(
         x_user_id=None,
         x_user_name=x_user_name,
-        max_history_count=max_history_count
+        max_history_count=max_history_count,
+        redis_client=request.app.state.redis
     )
     return {
         "status": "Get user tweets successfully",
@@ -62,13 +64,15 @@ async def get_x_user_tweets_history(
 
 @router.get("/get-prompt-for-user-role-data", response_model=dict)
 async def get_prompt_for_user_role_data(
+    request: Request,
     x_user_name: str,
     max_history_count: Optional[int] = 10
 ):
     user_tweets = await get_user_tweets_history(
         x_user_id=None,
         x_user_name=x_user_name,
-        max_history_count=max_history_count
+        max_history_count=max_history_count,
+        redis_client=request.app.state.redis
     )
 
     prompt = create_prompt_for_user_role_data(
@@ -82,20 +86,25 @@ async def get_prompt_for_user_role_data(
 
 @router.post("/request-llm-for-user-role-data", response_model=dict)
 async def request_llm_for_user_role_data(
+    request: Request,
     x_user_name: str,
     max_history_count: Optional[int] = 10
 ):
     user_tweets = await get_user_tweets_history(
         x_user_id=None,
         x_user_name=x_user_name,
-        max_history_count=max_history_count
+        max_history_count=max_history_count,
+        redis_client=request.app.state.redis
     )
 
     prompt = create_prompt_for_user_role_data(
         tweets=user_tweets
     )
 
-    role_data = await request_llm(prompt)
+    role_data = await request_llm(
+        payload=prompt,
+        redis_client=request.app.state.redis
+    )
 
     return {
         "status": "Get user's ai role data successfully",
@@ -105,20 +114,25 @@ async def request_llm_for_user_role_data(
 
 @router.post("/preview-future-citizen-role-input", response_model=dict)
 async def preview_future_citizen_role_input(
+    request: Request,
     x_user_name: str,
     max_history_count: Optional[int] = 10
 ):
     user_tweets = await get_user_tweets_history(
         x_user_id=None,
         x_user_name=x_user_name,
-        max_history_count=max_history_count
+        max_history_count=max_history_count,
+        redis_client=request.app.state.redis
     )
 
     prompt = create_prompt_for_user_role_data(
         tweets=user_tweets
     )
 
-    role_data = await request_llm(prompt)
+    role_data = await request_llm(
+        payload=prompt,
+        redis_client=request.app.state.redis
+    )
 
     future_citizen_role_input = create_future_citizen_role_input(
         user_role_data=role_data
@@ -142,6 +156,7 @@ async def placeholder_save_role_to_future_citizen(
 
 @router_for_tweets.post("/preview-prompt-for-tweet", response_model=dict)
 async def preview_prompt_for_tweet(
+    request: Request,
     x_user_name: str,
     max_history_count: Optional[int] = 10,
     topic: str = Form(...),
@@ -151,14 +166,18 @@ async def preview_prompt_for_tweet(
     user_tweets = await get_user_tweets_history(
         x_user_id=None,
         x_user_name=x_user_name,
-        max_history_count=max_history_count
+        max_history_count=max_history_count,
+        redis_client=request.app.state.redis
     )
 
     prompt = create_prompt_for_user_role_data(
         tweets=user_tweets
     )
 
-    role_data = await request_llm(prompt)
+    role_data = await request_llm(
+        payload=prompt,
+        redis_client=request.app.state.redis
+    )
 
     future_citizen_role_input = create_future_citizen_role_input(
         user_role_data=role_data
@@ -179,6 +198,7 @@ async def preview_prompt_for_tweet(
 
 @router_for_tweets.post("/request-llm-for-tweet", response_model=dict)
 async def request_llm_for_tweet(
+    request: Request,
     x_user_name: str,
     max_history_count: Optional[int] = 10,
     topic: str = Form(...),
@@ -188,14 +208,18 @@ async def request_llm_for_tweet(
     user_tweets = await get_user_tweets_history(
         x_user_id=None,
         x_user_name=x_user_name,
-        max_history_count=max_history_count
+        max_history_count=max_history_count,
+        redis_client=request.app.state.redis
     )
 
     prompt = create_prompt_for_user_role_data(
         tweets=user_tweets
     )
 
-    role_data = await request_llm(prompt)
+    role_data = await request_llm(
+        payload=prompt,
+        redis_client=request.app.state.redis
+    )
 
     future_citizen_role_input = create_future_citizen_role_input(
         user_role_data=role_data
@@ -213,7 +237,10 @@ async def request_llm_for_tweet(
         additional_requirements=additional_requirements
     )
 
-    tweet = await request_llm(payload)
+    tweet = await request_llm(
+        payload=payload,
+        # redis_client=request.app.state.redis
+    )
 
     return {
         "status": "Generate tweet successfully",
@@ -224,6 +251,7 @@ async def request_llm_for_tweet(
 
 @router_for_tweets.post("/preview-prompt-for-reply-tweet", response_model=dict)
 async def preview_prompt_for_reply_tweet(
+    request: Request,
     x_user_name: str,
     max_history_count: Optional[int] = 10,
     tweet_url: str = Form(...),
@@ -233,14 +261,18 @@ async def preview_prompt_for_reply_tweet(
     user_tweets = await get_user_tweets_history(
         x_user_id=None,
         x_user_name=x_user_name,
-        max_history_count=max_history_count
+        max_history_count=max_history_count,
+        redis_client=request.app.state.redis
     )
 
     prompt = create_prompt_for_user_role_data(
         tweets=user_tweets
     )
 
-    role_data = await request_llm(prompt)
+    role_data = await request_llm(
+        payload=prompt,
+        redis_client=request.app.state.redis
+    )
 
     future_citizen_role_input = create_future_citizen_role_input(
         user_role_data=role_data
@@ -248,7 +280,10 @@ async def preview_prompt_for_reply_tweet(
 
     # for demo only, so no role saving
 
-    tweet_content = get_x_tweet_content(tweet_url)
+    tweet_content = await get_x_tweet_content(
+        tweet_url=tweet_url,
+        redis_client=request.app.state.redis
+    )
 
     payload = create_prompt_input_for_reply_tweet(
         role=future_citizen_role_input,
@@ -266,6 +301,7 @@ async def preview_prompt_for_reply_tweet(
 
 @router_for_tweets.post("/request-llm-for-reply-tweet", response_model=dict)
 async def request_llm_for_reply_tweet(
+    request: Request,
     x_user_name: str,
     max_history_count: Optional[int] = 10,
     tweet_url: str = Form(...),
@@ -275,14 +311,18 @@ async def request_llm_for_reply_tweet(
     user_tweets = await get_user_tweets_history(
         x_user_id=None,
         x_user_name=x_user_name,
-        max_history_count=max_history_count
+        max_history_count=max_history_count,
+        redis_client=request.app.state.redis
     )
 
     prompt = create_prompt_for_user_role_data(
         tweets=user_tweets
     )
 
-    role_data = await request_llm(prompt)
+    role_data = await request_llm(
+        payload=prompt,
+        redis_client=request.app.state.redis
+    )
 
     future_citizen_role_input = create_future_citizen_role_input(
         user_role_data=role_data
@@ -290,7 +330,10 @@ async def request_llm_for_reply_tweet(
 
     # for demo only, so no role saving
 
-    tweet_content = get_x_tweet_content(tweet_url)
+    tweet_content = await get_x_tweet_content(
+        tweet_url=tweet_url,
+        redis_client=request.app.state.redis
+    )
 
     payload = create_prompt_input_for_reply_tweet(
         role=future_citizen_role_input,
@@ -299,7 +342,10 @@ async def request_llm_for_reply_tweet(
         additional_context=additional_requirements
     )
 
-    reply_tweet = await request_llm(payload)
+    reply_tweet = await request_llm(
+        payload=payload,
+        # redis_client=request.app.state.redis
+    )
 
     return {
         "status": "Generate tweet successfully",

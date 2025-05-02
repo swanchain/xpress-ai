@@ -4,31 +4,55 @@ import os
 import httpx
 import logging
 from dotenv import load_dotenv
-from cachetools import TTLCache
-from asyncache import cached
-from constants import CACHE_TTL
+from redis.asyncio import Redis
+import json
+import hashlib
 
 load_dotenv()
 
 logger = logging.getLogger()
 
-cache = TTLCache(maxsize=1000, ttl=CACHE_TTL)
+CACHE_TTL = 300  # Cache Time-to-Live in seconds, or use your constant
 
-@cached(cache)
+# Helper function to create a cache key based on user_id, user_name, and max_history_count
+def generate_cache_key(
+    x_user_id: Optional[int] = None, 
+    x_user_name: Optional[str] = None, 
+    max_history_count: int = 10
+) -> str:
+    if x_user_id:
+        return f"user_tweets:{x_user_id}:{max_history_count}"
+    if x_user_name:
+        return f"user_tweets:{x_user_name}:{max_history_count}"
+    return f"user_tweets:default:{max_history_count}"
+
+
 async def get_user_tweets_history(
     x_user_id: Optional[int] = None,
     x_user_name: Optional[str] = None,
     max_history_count: int = 10,
+    redis_client: Optional[Redis] = None
 ) -> Optional[List[str]]:
+    
+    if not x_user_id and not x_user_name:
+        raise ValueError("Either x_user_id or x_user_name must be provided")
+
+    # Create the cache key based on user id, username, and max_history_count
+    cache_key = generate_cache_key(x_user_id, x_user_name, max_history_count)
+
+    if redis_client:
+        cached_tweets = await redis_client.get(cache_key)
+        if cached_tweets:
+            logger.info(f"Cache hit for {cache_key}")
+            return json.loads(cached_tweets)
+
+    # If not cached, fetch from Twitter API
     client = tweepy.Client(
         bearer_token=os.environ.get("X_BEARER_TOKEN_FOR_API"),
         wait_on_rate_limit=True
     )
 
-    if not x_user_id and not x_user_name:
-        raise ValueError("Either x_user_id or x_user_name must be provided")
-
-    # get user id if not provided
+    # Get user id if not provided
     if not x_user_id:
         logger.info(f"Getting user id for {x_user_name}")
         user = client.get_user(username=x_user_name)
@@ -47,5 +71,10 @@ async def get_user_tweets_history(
     if not tweets.data:
         return []
 
-    return [tweet.text for tweet in tweets.data]
+    tweet_texts = [tweet.text for tweet in tweets.data]
 
+    if redis_client:
+        await redis_client.setex(cache_key, CACHE_TTL, json.dumps(tweet_texts))
+        logger.info(f"Cache set for {cache_key}")
+
+    return tweet_texts
