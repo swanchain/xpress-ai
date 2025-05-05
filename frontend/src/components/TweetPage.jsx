@@ -135,7 +135,7 @@ function ReplyTweet({
             <select
               id="ai-model"
               className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
-              value={stance}
+              value={model}
               onChange={(e) => setModel(e.target.value)}
             >
               {availableModels.map((modelName) => (
@@ -452,7 +452,7 @@ function CreateTweet({
             <select
               id="ai-model"
               className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
-              value={stance}
+              value={model}
               onChange={(e) => setModel(e.target.value)}
             >
               {availableModels.map((modelName) => (

@@ -68,7 +68,9 @@ export default function Home() {
       )
 
       const totalCredits = await contract.getTotalCredits(user.uuid)
-      setAvailableCredits(Number(totalCredits) + 5 - user.total_generated)
+      setAvailableCredits(
+        Number(totalCredits) + user.free_credit - user.total_generated,
+      )
     }
 
     if (user) {
