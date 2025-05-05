@@ -144,7 +144,8 @@ def create_prompt_input_for_tweet(
     role: dict,
     topic: str,
     stance: Optional[str] = None,
-    additional_requirements: Optional[str] = None
+    additional_requirements: Optional[str] = None,
+    model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
 ):
     tone_prompt = extract_tone_from_role(role)
 
@@ -184,7 +185,7 @@ Additional Requirements: {additional_requirements if additional_requirements els
                 "content": user_prompt
             }
         ],
-        "model": "meta-llama/Llama-3.3-70B-Instruct",
+        "model": model_name,
         "max_tokens": None,
         "temperature": 1,
         "top_p": 0.9,
@@ -199,6 +200,7 @@ def create_prompt_input_for_reply_tweet(
     tweet_content: str,
     choose_sentiment: Optional[str] = None,
     additional_context: Optional[str] = None,
+    model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
 ):
     tone_prompt = extract_tone_from_role(role)
 
@@ -237,7 +239,7 @@ Additional Context: {additional_context if additional_context else 'none'}
                 "content": user_prompt
             }
         ],
-        "model": "meta-llama/Llama-3.3-70B-Instruct",
+        "model": model_name,
         "max_tokens": None,
         "temperature": 1,
         "top_p": 0.9,

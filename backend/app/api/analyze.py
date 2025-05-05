@@ -57,12 +57,21 @@ router = APIRouter(prefix="/ai", tags=["AI Analyze"])
 
 logger = logging.getLogger()
 
+
+@router.get("/get-all-available-model-names")
+async def get_all_available_model_names():
+    return {
+        "status": "Get all available model names successfully",
+        "model_names": ALL_AVAILABLE_MODEL_NAMES
+    }
+
 @router.post("/generate-tweet", response_model=dict)
 async def generate_tweet(
     request: Request,
     topic: str = Form(...),
     stance: Optional[str] = Form(None),
     additional_requirements: Optional[str] = Form(None),
+    model_name: Optional[str] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -72,18 +81,36 @@ async def generate_tweet(
             status_code=400, 
             detail="Not enough credits"
         )
+    
+    if model_name and model_name not in ALL_AVAILABLE_MODEL_NAMES:
+        raise HTTPException(
+            status_code=400, 
+            detail="Model name not supported"
+        )
+
+    if not model_name:
+        model_name = "meta-llama/Llama-3.3-70B-Instruct"
 
     role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
-    role = await get_role_details_from_future_citizen(role_id)
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
+    )
     
     payload = create_prompt_input_for_tweet(
         role=role,
         topic=topic,
         stance=stance,
-        additional_requirements=additional_requirements
+        additional_requirements=additional_requirements,
+        model_name=model_name
     )
 
-    tweet_content = await request_llm(payload)
+    tweet_content = await request_llm(
+        payload=payload,
+        model_name=model_name,
+        # no redis for this request, no need to cache
+        redis_client=None
+    )
 
     # update user credit
     user.total_generated = user.total_generated + 1
@@ -134,6 +161,7 @@ async def generate_tweet_reply(
     tweet_url: str = Form(...),
     choose_sentiment: Optional[str] = Form(None),
     additional_context: Optional[str] = Form(None),
+    model_name: Optional[str] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -143,9 +171,21 @@ async def generate_tweet_reply(
             status_code=400, 
             detail="Not enough credits"
         )
+    
+    if model_name and model_name not in ALL_AVAILABLE_MODEL_NAMES:
+        raise HTTPException(
+            status_code=400, 
+            detail="Model name not supported"
+        )
+    
+    if not model_name:
+        model_name = "meta-llama/Llama-3.3-70B-Instruct"
 
     role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
-    role = await get_role_details_from_future_citizen(role_id)
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
+    )
 
     tweet_content = await get_x_tweet_content(
         tweet_url=tweet_url,
@@ -156,10 +196,16 @@ async def generate_tweet_reply(
         role=role,
         tweet_content=tweet_content,
         choose_sentiment=choose_sentiment,
-        additional_context=additional_context
+        additional_context=additional_context,
+        model_name=model_name
     )
 
-    reply_content = await request_llm(payload)
+    reply_content = await request_llm(
+        payload=payload,
+        model_name=model_name,
+        # no redis for this request, no need to cache
+        redis_client=None
+    )
 
     # update user credit
     user.total_generated = user.total_generated + 1

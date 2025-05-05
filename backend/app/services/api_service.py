@@ -1,6 +1,7 @@
 import httpx
 import logging
 import os
+import json
 import requests
 from fastapi import HTTPException
 from constants import X_TWEET_POST_INFO_API
@@ -217,8 +218,16 @@ async def send_role_to_future_citizen(
 
 
 async def get_role_details_from_future_citizen(
-    ai_role_id: str
+    ai_role_id: str,
+    redis_client: Redis = None
 ):
+    key = f"role_details:{ai_role_id}"
+    if redis_client:
+        cached_response = await redis_client.get(key)
+        if cached_response is not None:
+            return json.loads(cached_response)
+
+    # Get bearer token through login
     bearer_token = await get_futurecitizen_bearer_token_async()
     
     # Make API call to get role details
@@ -235,5 +244,10 @@ async def get_role_details_from_future_citizen(
             logger.error(f"Failed to get role details: {response.text}")
             return None
             
-        return response.json()
+        role_details = response.json()
+        
+        if redis_client:
+            await redis_client.setex(key, CACHE_TTL, json.dumps(role_details))
+            
+        return role_details
         
