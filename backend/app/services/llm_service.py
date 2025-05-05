@@ -7,6 +7,7 @@ import hashlib
 from redis.asyncio import Redis
 import json
 from constants import CACHE_TTL
+from llm_models import LLM_MODELS_AND_POSTPROCESSORS
 
 load_dotenv()
 
@@ -21,6 +22,7 @@ def payload_hash_key(payload: dict) -> str:
 
 async def request_llm(
     payload: dict,
+    model_name: str = "meta-llama/Llama-3.3-70B-Instruct",
     redis_client: Redis = None,
 ) -> str:
     key = payload_hash_key(payload)
@@ -45,6 +47,8 @@ async def request_llm(
         
         try:
             content = result["choices"][0]["message"]["content"]
+            if postprocessor := LLM_MODELS_AND_POSTPROCESSORS.get(model_name):
+                content = postprocessor(content)
             
             if redis_client:
                 await redis_client.setex(key, CACHE_TTL, content)
