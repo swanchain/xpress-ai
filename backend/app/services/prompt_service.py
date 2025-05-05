@@ -211,19 +211,19 @@ USER VOICE PROFILE:
 {tone_prompt}
 
 KEY INSTRUCTIONS:
-1. Focus on REPLICATING HOW THIS USER COMMUNICATES, not what topics they typically discuss
+1. Focus on Tweet content that the user wants to reply to
 2. Apply their characteristic writing style, word choice, and sentence structure to any reply
 3. Maintain their typical level of formality/informality, humor style, and engagement approach
 4. Do not force connections to topics mentioned in their profile if irrelevant to the conversation
 5. Remember that authentic people respond naturally to all kinds of topics, even ones outside their usual interests
-6. If they typically use specific rhetorical devices (questions, data points, humor), incorporate these when appropriate
+6. If there is additional context provided, use it to guide the reply
 
-Write a reply tweet that this specific person would likely post, focusing on capturing their authentic voice and communication style. The reply should feel like it genuinely came from them, addressing the tweet's content directly while maintaining their distinctive communication patterns.
+Generate a reply that this specific user might post, focusing on capturing their authentic voice while addressing the content of the tweet.
 """
     
     user_prompt = f"""
 REPLY REQUEST:
-Tweet to Reply to: {tweet_content}
+Tweet Content to Reply to: {tweet_content}
 Desired Sentiment: {choose_sentiment if choose_sentiment else "maintain user's natural response style"}
 Additional Context: {additional_context if additional_context else 'none'}
 """
