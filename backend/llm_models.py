@@ -14,4 +14,6 @@ LLM_MODELS_AND_POSTPROCESSORS = {
     "deepseek-ai/DeepSeek-V3-0324": None,
     "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": clean_think_context,
     "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": clean_think_context,
+    "Qwen/QwQ-32B": None,
+    "Qwen/Qwen2.5-Coder-32B-Instruct": None
 }
