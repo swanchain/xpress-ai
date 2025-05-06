@@ -54,16 +54,39 @@ from app.services.api_service import (
     get_role_details_from_future_citizen
 )
 
-router = APIRouter(prefix="/ai", tags=["AI Analyze"])
+router = APIRouter(prefix="/ai/v2", tags=["AI Analyze V2"])
 
 logger = logging.getLogger()
 
 
-@router.get("/get-all-available-model-names")
-async def get_all_available_model_names():
+@router.post("/generate-theme", response_model=dict)
+async def generate_theme(
+    request: Request,
+    choose_sentiment: Optional[str] = Form(None),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    redis_client = request.app.state.redis
+    role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
+    )
+    
+    payload = create_prompt_input_for_theme(
+        role=role,
+        choose_sentiment=choose_sentiment
+    )
+
+    theme_content = await request_llm(
+        payload=payload,
+    )
+
     return {
-        "status": "Get all available model names successfully",
-        "model_names": ALL_AVAILABLE_MODEL_NAMES
+        "status": "Get tweet content successfully",
+        "theme_content": theme_content,
+        "user": user.to_dict(),
+        "role": role
     }
 
 @router.post("/generate-tweet", response_model=dict)
@@ -97,6 +120,21 @@ async def generate_tweet(
         ai_role_id=role_id,
         redis_client=redis_client
     )
+
+    # if no additional requirements, use theme generation as additional context
+    if not additional_requirements:
+        try:
+            additional_requirements_payload = create_prompt_input_for_theme(
+                role=role,
+                choose_sentiment=stance
+            )
+
+            additional_requirements = await request_llm(
+                payload=additional_requirements_payload,
+            )
+        except:
+            additional_requirements = ""
+
     
     payload = create_prompt_input_for_tweet(
         role=role,
@@ -138,23 +176,6 @@ async def generate_tweet(
         "user": user.to_dict()
     }
 
-@router.post("/get-tweet-content", response_model=dict)
-async def get_tweet_content(
-    request: Request,
-    tweet_url: str,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    content = await get_x_tweet_content(
-        tweet_url=tweet_url,
-        redis_client=request.app.state.redis
-    )
-    
-    return {
-        "status": "Get tweet content successfully",
-        "tweet_content": content
-    }
-    
 
 @router.post("/generate-tweet-reply", response_model=dict)
 async def generate_tweet_reply(
@@ -192,6 +213,22 @@ async def generate_tweet_reply(
         tweet_url=tweet_url,
         redis_client=request.app.state.redis
     )
+
+
+    # if no additional_context, use theme generation as additional context
+    if not additional_context:
+        try:
+            additional_context_payload = create_prompt_input_for_theme(
+                role=role,
+                choose_sentiment=choose_sentiment
+            )
+
+            additional_context = await request_llm(
+                payload=additional_context_payload,
+            )
+        except:
+            additional_context = ""
+
 
     payload = create_prompt_input_for_reply_tweet(
         role=role,
@@ -231,34 +268,4 @@ async def generate_tweet_reply(
         "status": "Get reply content successfully",
         "reply_content": reply_content,
         "user": user.to_dict()
-    }
-
-@router.get("/get-generate-history")
-async def get_generate_history(
-    page: int = 1,
-    size: int = 10,
-    generate_type: str = None,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user)
-):
-    offset = (page - 1) * size
-
-    total_query = select(func.count()).select_from(GenerateHistory).filter(GenerateHistory.uuid == user.uuid)
-    query = select(GenerateHistory).filter(GenerateHistory.uuid == user.uuid)
-
-    if generate_type:
-        total_query = total_query.filter(GenerateHistory.generate_type == generate_type)
-        query = query.filter(GenerateHistory.generate_type == generate_type)
-
-    total_result = await db.execute(total_query)
-    total = total_result.scalar_one_or_none() or 0
-    query_result = await db.execute(query.offset(offset).limit(size))
-    result = query_result.scalars().all()
-
-    return {
-        "status": "Get generate history successfully",
-        "total": total,
-        "histories": result,
-        "page": page,
-        "size": len(result)
     }
