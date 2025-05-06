@@ -47,7 +47,8 @@ from app.services.user_service import UserService
 from app.services.llm_service import request_llm
 from app.services.prompt_service import (
     create_prompt_input_for_tweet,
-    create_prompt_input_for_reply_tweet
+    create_prompt_input_for_reply_tweet,
+    create_prompt_input_for_theme
 )
 from app.services.api_service import (
     get_role_details_from_future_citizen
@@ -63,6 +64,38 @@ async def get_all_available_model_names():
     return {
         "status": "Get all available model names successfully",
         "model_names": ALL_AVAILABLE_MODEL_NAMES
+    }
+
+@router.post("/generate-theme", response_model=dict)
+async def generate_theme(
+    request: Request,
+    choose_sentiment: Optional[str] = Form(None),
+    additional_context: Optional[str] = Form(None),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    redis_client = request.app.state.redis
+    role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
+    )
+    
+    payload = create_prompt_input_for_theme(
+        role=role,
+        choose_sentiment=choose_sentiment,
+        additional_context=additional_context
+    )
+
+    theme_content = await request_llm(
+        payload=payload,
+    )
+
+    return {
+        "status": "Get tweet content successfully",
+        "theme_content": theme_content,
+        "user": user.to_dict(),
+        "role": role
     }
 
 @router.post("/generate-tweet", response_model=dict)

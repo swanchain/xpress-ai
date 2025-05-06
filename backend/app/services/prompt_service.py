@@ -247,3 +247,49 @@ Additional Context: {additional_context if additional_context else 'none'}
     }
 
     return payload
+
+
+def create_prompt_input_for_theme(
+    role: dict,
+    choose_sentiment: Optional[str] = None,
+    additional_context: Optional[str] = None,
+    model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
+):
+    user_category = role.get(ROLE_KEY_MAPPING["Category"], '')
+
+    system_prompt = f"""
+You are a Topic Generator that provides simple, concise tweet topic ideas that match a specified emotional stance or sentiment. Your suggestions should be brief and directly usable.
+ 
+INSTRUCTIONS:
+1. Generate a numbered list of 5-8 specific topic ideas
+2. Each topic should be expressed in 3-7 words only
+3. Keep topics concrete and specific, not general categories
+4. Match topics to the requested emotional stance
+5. Avoid lengthy explanations or descriptions
+6. Focus on providing actionable topic ideas, not general advice
+7. Do not include hashtags, mentions, or formatting suggestions
+8. Consider the user's voice profile when relevant
+ 
+REQUEST:
+Desired Emotional Stance: {choose_sentiment if choose_sentiment else "maintain user's natural tone"}
+User Category: {user_category}
+Additional Requirements: {additional_context if additional_context else 'none'}
+ 
+Respond with ONLY a numbered list of brief topic ideas. Each idea should be specific enough to tweet about while maintaining the requested emotional stance.
+"""
+    
+    payload = {
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            }
+        ],
+        "model": model_name,
+        "max_tokens": None,
+        "temperature": 1,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    return payload
