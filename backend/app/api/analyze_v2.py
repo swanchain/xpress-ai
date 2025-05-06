@@ -48,7 +48,8 @@ from app.services.llm_service import request_llm
 from app.services.prompt_service import (
     create_prompt_input_for_tweet,
     create_prompt_input_for_reply_tweet,
-    create_prompt_input_for_theme
+    create_prompt_input_for_theme,
+    create_prompt_input_for_evaluation
 )
 from app.services.api_service import (
     get_role_details_from_future_citizen
@@ -59,7 +60,7 @@ router = APIRouter(prefix="/ai/v2", tags=["AI Analyze V2"])
 logger = logging.getLogger()
 
 
-@router.post("/generate-theme", response_model=dict)
+@router.post("/generate-theme-test-only", response_model=dict)
 async def generate_theme(
     request: Request,
     choose_sentiment: Optional[str] = Form("Positive"),
@@ -94,7 +95,7 @@ async def generate_theme(
     )
 
     return {
-        "status": "Get tweet content successfully",
+        "status": "Get theme successfully",
         "theme_content": theme_content,
         "user": user.to_dict(),
         "role": role
@@ -154,6 +155,7 @@ async def generate_tweet(
 
             additional_requirements = await request_llm(
                 payload=additional_requirements_payload,
+                model_name=model_name_for_theme_generator
             )
         except:
             additional_requirements = ""
@@ -260,6 +262,7 @@ async def generate_tweet_reply(
 
             additional_context = await request_llm(
                 payload=additional_context_payload,
+                model_name=model_name_for_theme_generator
             )
         except:
             additional_context = ""
@@ -304,3 +307,52 @@ async def generate_tweet_reply(
         "reply_content": reply_content,
         "user": user.to_dict()
     }
+
+
+
+@router.post("/evaluate-generated-tweet", response_model=dict)
+async def eveluate_generated_tweet(
+    request: Request,
+    generated_text: str = Form(...),
+    model_name_for_evaluator: Optional[str] = Form("deepseek-ai/DeepSeek-V3-0324"),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    redis_client = request.app.state.redis
+    
+    role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
+    )
+
+    if model_name_for_evaluator and model_name_for_evaluator not in ALL_AVAILABLE_MODEL_NAMES:
+        raise HTTPException(
+            status_code=400, 
+            detail="Model name not supported"
+        )
+
+    if not model_name_for_evaluator:
+        model_name_for_evaluator = "deepseek-ai/DeepSeek-V3-0324"
+
+    payload = create_prompt_input_for_evaluation(
+        role=role,
+        generated_text=generated_text,
+        model_name=model_name_for_evaluator
+    )
+
+    evaluation_result = await request_llm(
+        payload=payload,
+        model_name=model_name_for_evaluator,
+        # no redis for this request, no need to cache
+        redis_client=None
+    )
+
+    return {
+        "status": "Get evaluation result successfully",
+        "evaluation-result": evaluation_result,
+        "user": user.to_dict(),
+        "role": role
+    }
+
+

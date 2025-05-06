@@ -256,7 +256,7 @@ Write a reply tweet that this specific person would likely post, focusing on cap
 def create_prompt_input_for_theme(
     role: dict,
     choose_sentiment: Optional[str] = None,
-    model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
+    model_name: Optional[str] = "deepseek-ai/DeepSeek-V3-0324",
 ):
     user_category = role.get(ROLE_KEY_MAPPING["Category"], '')
 
@@ -297,15 +297,15 @@ Respond with ONLY a numbered list of brief topic ideas. Each idea should be spec
     return payload
 
 
-def create_prompt_input_for_judge(
+def create_prompt_input_for_evaluation(
     role: dict,
     generated_content: str,
-    model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
+    model_name: Optional[str] = "deepseek-ai/DeepSeek-V3-0324",
 ):
     tone_prompt = extract_tone_from_role(role)
 
     system_prompt = f"""
-    You are a Personality Fit Evaluator that assesses whether generated tweet content authentically matches a user's distinctive voice, writing style, and communication patterns. Your evaluation focuses purely on style consistency, not topic appropriateness.
+You are a Personality Fit Evaluator that assesses whether generated tweet content authentically matches a user's distinctive voice, writing style, and communication patterns. Your evaluation focuses purely on style consistency, not topic appropriateness.
 
 USER VOICE PROFILE:(system prompt)
 {tone_prompt}
@@ -335,3 +335,19 @@ RESPONSE FORMAT:(system prompt)
 
 Focus exclusively on writing style and voice characteristics. Do NOT evaluate topic relevance or appropriateness - only whether the content sounds authentically like this specific user wrote it.
 """
+    payload = {
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            }
+        ],
+        "model": model_name,
+        "max_tokens": None,
+        "temperature": 1,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    return payload
+
