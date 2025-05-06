@@ -24,6 +24,7 @@ export default function Home() {
   const [transactionHash, setTransactionHash] = useState(null)
   const [availableCredits, setAvailableCredits] = useState(null)
   const [tweetHistory, setTweetHistory] = useState([])
+  const [betaVersion, setBetaVersion] = useState(null)
 
   const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
   const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL
@@ -132,16 +133,17 @@ export default function Home() {
 
         {/* Main Content */}
         <main className="flex-grow flex flex-col items-center justify-center px-4 text-center gap-5 z-30">
-          {user ? (
+          {betaVersion ? (
             <TweetPage
               selectedTab={selectedTab}
               availableCredits={availableCredits}
               getUser={getUser}
               tweetHistory={tweetHistory}
               getTweetHistory={getTweetHistory}
+              betaVersion={betaVersion}
             />
           ) : (
-            <LandingPage />
+            <LandingPage setBetaVersion={setBetaVersion} user={user} />
           )}
         </main>
       </div>

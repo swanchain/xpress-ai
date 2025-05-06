@@ -7,6 +7,7 @@ function ReplyTweet({
   getUser,
   getTweetHistory,
   availableModels,
+  betaVersion,
 }) {
   const [url, setUrl] = useState("");
   const [stance, setStance] = useState("neutral");
@@ -51,13 +52,14 @@ function ReplyTweet({
       if (model) formData.append("model_name", model);
       if (requirements) formData.append("additional_context", requirements);
 
-      const response = await apiClient.post(
-        `/ai/generate-tweet-reply`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      const url =
+        betaVersion == "v2"
+          ? "/ai/v2/generate-tweet-reply"
+          : "/ai/generate-tweet-reply";
+
+      const response = await apiClient.post(url, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       setReply(response.data.reply_content);
 
@@ -373,8 +375,10 @@ function CreateTweet({
       if (requirements)
         formData.append("additional_requirements", requirements);
 
-      // console.log(data);
-      const response = await apiClient.post(`/ai/generate-tweet`, formData, {
+      const url =
+        betaVersion == "v2" ? "/ai/v2/generate-tweet" : "/ai/generate-tweet";
+
+      const response = await apiClient.post(url, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -619,6 +623,7 @@ export default function TweetPage({
   getUser,
   tweetHistory,
   getTweetHistory,
+  betaVersion,
 }) {
   const [availableModels, setAvailableModels] = useState([]);
 
@@ -646,6 +651,7 @@ export default function TweetPage({
             getUser={getUser}
             getTweetHistory={getTweetHistory}
             availableModels={availableModels}
+            betaVersion={betaVersion}
           />
           <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>
@@ -663,6 +669,7 @@ export default function TweetPage({
             getUser={getUser}
             getTweetHistory={getTweetHistory}
             availableModels={availableModels}
+            betaVersion={betaVersion}
           />
           <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>
