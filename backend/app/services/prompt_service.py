@@ -162,6 +162,7 @@ IMPORTANT INSTRUCTIONS:
 4. Do not try to redirect toward topics mentioned in their profile
 5. Accept that people discuss diverse topics outside their usual interests
 6. Maintain their authentic voice (tone, humor style, sentence structure, word choice) while addressing ANY topic requested
+7. ONLY output the content that this person would write
 
 Write a tweet or reply that this specific user might post, focusing on capturing their authentic voice while addressing the requested topic. The content should feel natural coming from them, even if the topic is different from what they typically discuss.
 """
@@ -217,6 +218,7 @@ KEY INSTRUCTIONS:
 4. Do not force connections to topics mentioned in their profile if irrelevant to the conversation
 5. Remember that authentic people respond naturally to all kinds of topics, even ones outside their usual interests
 6. If there is additional context provided, use it to guide the reply
+7. ONLY REPLY TO THE TWEET, DO NOT add any additional context or commentary
 
 Generate a reply that this specific user might post, focusing on capturing their authentic voice while addressing the content of the tweet.
 """
@@ -226,6 +228,8 @@ REPLY REQUEST:
 Tweet Content to Reply to: {tweet_content}
 Desired Sentiment: {choose_sentiment if choose_sentiment else "maintain user's natural response style"}
 Additional Context: {additional_context if additional_context else 'none'}
+
+Write a reply tweet that this specific person would likely post, focusing on capturing their authentic voice and communication style. The reply should feel like it genuinely came from them, addressing the tweet's content directly while maintaining their distinctive communication patterns. ONLY OUTPUT REPLY TO THE TWEET, do not add any additional context or commentary
 """
 
     payload = {
@@ -247,3 +251,101 @@ Additional Context: {additional_context if additional_context else 'none'}
     }
 
     return payload
+
+
+def create_prompt_input_for_theme(
+    role: dict,
+    choose_sentiment: Optional[str] = None,
+    model_name: Optional[str] = "deepseek-ai/DeepSeek-V3-0324",
+):
+    user_category = role.get(ROLE_KEY_MAPPING["Category"], '')
+
+    system_prompt = f"""
+You are a Topic Generator that provides simple, concise tweet topic ideas that match a specified emotional stance or sentiment. Your suggestions should be brief and directly usable.
+ 
+INSTRUCTIONS:
+1. Generate a numbered list of 5-8 specific topic ideas
+2. Each topic should be expressed in 3-7 words only
+3. Keep topics concrete and specific, not general categories
+4. Match topics to the requested emotional stance
+5. Avoid lengthy explanations or descriptions
+6. Focus on providing actionable topic ideas, not general advice
+7. Do not include hashtags, mentions, or formatting suggestions
+8. Consider the user's voice profile when relevant
+ 
+REQUEST:
+Desired Emotional Stance: {choose_sentiment if choose_sentiment else "maintain user's natural tone"}
+User Category: {user_category}
+ 
+Respond with ONLY a numbered list of brief topic ideas. Each idea should be specific enough to tweet about while maintaining the requested emotional stance.
+"""
+    
+    payload = {
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            }
+        ],
+        "model": model_name,
+        "max_tokens": None,
+        "temperature": 1,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    return payload
+
+
+def create_prompt_input_for_evaluation(
+    role: dict,
+    generated_content: str,
+    model_name: Optional[str] = "deepseek-ai/DeepSeek-V3-0324",
+):
+    tone_prompt = extract_tone_from_role(role)
+
+    system_prompt = f"""
+You are a Personality Fit Evaluator that assesses whether generated tweet content authentically matches a user's distinctive voice, writing style, and communication patterns. Your evaluation focuses purely on style consistency, not topic appropriateness.
+
+USER VOICE PROFILE:
+{tone_prompt}
+
+EVALUATION DIMENSIONS:
+1. TONE MATCH: Does the content use the same emotional tone typically employed by this user?
+2. LANGUAGE PATTERNS: Does it use vocabulary, sentence structures, and rhetorical devices consistent with the user's style?
+3. PERSONALITY EXPRESSION: Are the user's key personality traits evident in the writing?
+4. AUTHENTICITY: Would this tweet be indistinguishable from content actually written by this user?
+5. DISTINCTIVE ELEMENTS: Does it include the user's characteristic writing quirks or unique expressions?
+
+CONTENT TO EVALUATE:
+Generated Tweet: {generated_content}
+
+RESPONSE FORMAT:
+{{
+  "personality_match_score": 0-10,
+  "tone_alignment": 0-10,
+  "language_pattern_consistency": 0-10,
+  "personality_trait_expression": 0-10,
+  "authenticity_rating": 0-10,
+  "overall_personality_fit": true/false,
+  "strongest_match_aspect": "The aspect that most closely matches the user's style",
+  "weakest_match_aspect": "The aspect that least resembles the user's style",
+  "specific_improvement": "Concrete suggestion to better match the user's voice"
+}}
+Focus exclusively on writing style and voice characteristics. Do NOT evaluate topic relevance or appropriateness - only whether the content sounds authentically like this specific user wrote it.
+"""
+
+    payload = {
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": "Please evaluate the tweet using the dimensions and format above."}
+        ],
+        "model": model_name,
+        "max_tokens": None,
+        "temperature": 1,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    return payload
+
