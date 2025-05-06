@@ -63,6 +63,7 @@ logger = logging.getLogger()
 async def generate_theme(
     request: Request,
     choose_sentiment: Optional[str] = Form(None),
+    model_name: Optional[str] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -73,9 +74,19 @@ async def generate_theme(
         redis_client=redis_client
     )
     
+    if model_name and model_name not in ALL_AVAILABLE_MODEL_NAMES:
+        raise HTTPException(
+            status_code=400, 
+            detail="Model name not supported"
+        )
+
+    if not model_name:
+        model_name = "meta-llama/Llama-3.3-70B-Instruct"
+
     payload = create_prompt_input_for_theme(
         role=role,
-        choose_sentiment=choose_sentiment
+        choose_sentiment=choose_sentiment,
+        model_name=model_name
     )
 
     theme_content = await request_llm(
@@ -126,7 +137,8 @@ async def generate_tweet(
         try:
             additional_requirements_payload = create_prompt_input_for_theme(
                 role=role,
-                choose_sentiment=stance
+                choose_sentiment=stance,
+                model_name=model_name
             )
 
             additional_requirements = await request_llm(
