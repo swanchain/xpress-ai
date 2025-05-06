@@ -313,7 +313,7 @@ async def generate_tweet_reply(
 @router.post("/evaluate-generated-tweet", response_model=dict)
 async def eveluate_generated_tweet(
     request: Request,
-    generated_text: str = Form(...),
+    generated_content: str = Form(...),
     model_name_for_evaluator: Optional[str] = Form("deepseek-ai/DeepSeek-V3-0324"),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -337,7 +337,7 @@ async def eveluate_generated_tweet(
 
     payload = create_prompt_input_for_evaluation(
         role=role,
-        generated_text=generated_text,
+        generated_content=generated_content,
         model_name=model_name_for_evaluator
     )
 
