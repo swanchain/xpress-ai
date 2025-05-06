@@ -62,8 +62,8 @@ logger = logging.getLogger()
 @router.post("/generate-theme", response_model=dict)
 async def generate_theme(
     request: Request,
-    choose_sentiment: Optional[str] = Form(None),
-    model_name: Optional[str] = Form(None),
+    choose_sentiment: Optional[str] = Form("Positive"),
+    model_name_for_theme_generator: Optional[str] = Form("deepseek-ai/DeepSeek-V3-0324"),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -74,19 +74,19 @@ async def generate_theme(
         redis_client=redis_client
     )
     
-    if model_name and model_name not in ALL_AVAILABLE_MODEL_NAMES:
+    if model_name_for_theme_generator and model_name_for_theme_generator not in ALL_AVAILABLE_MODEL_NAMES:
         raise HTTPException(
             status_code=400, 
             detail="Model name not supported"
         )
 
-    if not model_name:
-        model_name = "meta-llama/Llama-3.3-70B-Instruct"
+    if not model_name_for_theme_generator:
+        model_name_for_theme_generator = "deepseek-ai/DeepSeek-V3-0324"
 
     payload = create_prompt_input_for_theme(
         role=role,
         choose_sentiment=choose_sentiment,
-        model_name=model_name
+        model_name=model_name_for_theme_generator
     )
 
     theme_content = await request_llm(
@@ -104,9 +104,10 @@ async def generate_theme(
 async def generate_tweet(
     request: Request,
     topic: str = Form(...),
-    stance: Optional[str] = Form(None),
+    stance: Optional[str] = Form("Positive"),
     additional_requirements: Optional[str] = Form(None),
-    model_name: Optional[str] = Form(None),
+    model_name: Optional[str] = Form("meta-llama/Llama-3.3-70B-Instruct"),
+    model_name_for_theme_generator: Optional[str] = Form("deepseek-ai/DeepSeek-V3-0324"),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -134,11 +135,21 @@ async def generate_tweet(
 
     # if no additional requirements, use theme generation as additional context
     if not additional_requirements:
+
+        if model_name_for_theme_generator and model_name_for_theme_generator not in ALL_AVAILABLE_MODEL_NAMES:
+            raise HTTPException(
+                status_code=400, 
+                detail="Model name not supported"
+            )
+
+        if not model_name_for_theme_generator:
+            model_name_for_theme_generator = "deepseek-ai/DeepSeek-V3-0324"
+
         try:
             additional_requirements_payload = create_prompt_input_for_theme(
                 role=role,
                 choose_sentiment=stance,
-                model_name=model_name
+                model_name=model_name_for_theme_generator
             )
 
             additional_requirements = await request_llm(
@@ -193,9 +204,10 @@ async def generate_tweet(
 async def generate_tweet_reply(
     request: Request,
     tweet_url: str = Form(...),
-    choose_sentiment: Optional[str] = Form(None),
+    choose_sentiment: Optional[str] = Form("Positive"),
     additional_context: Optional[str] = Form(None),
-    model_name: Optional[str] = Form(None),
+    model_name: Optional[str] = Form("meta-llama/Llama-3.3-70B-Instruct"),
+    model_name_for_theme_generator: Optional[str] = Form("deepseek-ai/DeepSeek-V3-0324"),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -229,10 +241,21 @@ async def generate_tweet_reply(
 
     # if no additional_context, use theme generation as additional context
     if not additional_context:
+
+        if model_name_for_theme_generator and model_name_for_theme_generator not in ALL_AVAILABLE_MODEL_NAMES:
+            raise HTTPException(
+                status_code=400, 
+                detail="Model name not supported"
+            )
+
+        if not model_name_for_theme_generator:
+            model_name_for_theme_generator = "deepseek-ai/DeepSeek-V3-0324"
+
         try:
             additional_context_payload = create_prompt_input_for_theme(
                 role=role,
-                choose_sentiment=choose_sentiment
+                choose_sentiment=choose_sentiment,
+                model_name=model_name_for_theme_generator
             )
 
             additional_context = await request_llm(
