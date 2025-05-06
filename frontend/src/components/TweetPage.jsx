@@ -9,7 +9,7 @@ function ReplyTweet({
   availableModels,
 }) {
   const [url, setUrl] = useState("");
-  const [stance, setStance] = useState("");
+  const [stance, setStance] = useState("neutral");
   const [model, setModel] = useState(
     availableModels.length > 0 ? availableModels[0] : ""
   );
@@ -156,7 +156,6 @@ function ReplyTweet({
               value={stance}
               onChange={(e) => setStance(e.target.value)}
             >
-              <option value="">Choose stance...</option>
               <option value="positive">Positive</option>
               <option value="neutral">Neutral</option>
               <option value="negative">Negative</option>
@@ -340,7 +339,7 @@ function CreateTweet({
   availableModels,
 }) {
   const [topic, setTopic] = useState("");
-  const [stance, setStance] = useState("");
+  const [stance, setStance] = useState("neutral");
   const [model, setModel] = useState(
     availableModels.length > 0 ? availableModels[0] : ""
   );
@@ -473,7 +472,6 @@ function CreateTweet({
               value={stance}
               onChange={(e) => setStance(e.target.value)}
             >
-              <option value="">Choose stance...</option>
               <option value="positive">Positive</option>
               <option value="neutral">Neutral</option>
               <option value="negative">Negative</option>
