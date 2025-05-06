@@ -1,5 +1,6 @@
 from web3 import Web3
 from config import settings
+from redis.asyncio import Redis
 
 RPC = settings.RPC
 CONTRACT_ADDRESS = settings.CONTRACT_ADDRESS
@@ -33,14 +34,16 @@ abi = [
 # Contract instance
 contract = web3.eth.contract(address=contract_address, abi=abi)
 
-from cachetools import TTLCache
-from cachetools import cached
-
-credit_cache = TTLCache(maxsize=1000, ttl=30)
-
-@cached(credit_cache)
-def get_total_credits(uuid: str):
-    print("calling contract")
+async def get_total_credits(uuid: str, redis: Redis):
+    if redis:
+      total_credits = await redis.get(uuid)
+      if total_credits:
+          try:
+              return int(total_credits)
+          except:
+              pass
     total_credits = contract.functions.getTotalCredits(uuid).call()
+    if redis:
+       await redis.setex(uuid, 30, total_credits)
     return total_credits
 

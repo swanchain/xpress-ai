@@ -44,86 +44,73 @@ from app.services.api_service import (
 from app.services.credit_service import check_credits_enough
 from app.services.user_service import UserService
 
+from app.services.llm_service import request_llm
+from app.services.prompt_service import (
+    create_prompt_input_for_tweet,
+    create_prompt_input_for_reply_tweet
+)
+from app.services.api_service import (
+    get_role_details_from_future_citizen
+)
 
 router = APIRouter(prefix="/ai", tags=["AI Analyze"])
 
 logger = logging.getLogger()
 
+
+@router.get("/get-all-available-model-names")
+async def get_all_available_model_names():
+    return {
+        "status": "Get all available model names successfully",
+        "model_names": ALL_AVAILABLE_MODEL_NAMES
+    }
+
 @router.post("/generate-tweet", response_model=dict)
 async def generate_tweet(
+    request: Request,
     topic: str = Form(...),
     stance: Optional[str] = Form(None),
     additional_requirements: Optional[str] = Form(None),
+    model_name: Optional[str] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not check_credits_enough(user):
+    redis_client = request.app.state.redis
+    if not await check_credits_enough(user, redis_client):
         raise HTTPException(
             status_code=400, 
             detail="Not enough credits"
         )
+    
+    if model_name and model_name not in ALL_AVAILABLE_MODEL_NAMES:
+        raise HTTPException(
+            status_code=400, 
+            detail="Model name not supported"
+        )
 
-    user_service = UserService(db)
-    role = await user_service.get_user_role_details(user.id)
-    if not role:
-        role = settings.FUTURECITIZEN_ROLE_ID
+    if not model_name:
+        model_name = "meta-llama/Llama-3.3-70B-Instruct"
 
-    # Build system prompt
-    system_prompt = (
-        f"You are an AI assistant with the following configuration:\n"
-        f"Name: {role.get('name', '')}\n"
-        f"System Prompt: {role.get('system_prompt', '')}\n"
-        f"Personality Traits: {', '.join(role.get('personality_traits', []))}\n"
-        f"Background Story: {role.get('background_story', '')}\n"
-        f"Category: {role.get('category', '')}\n"
-        f"Language: {role.get('language', '')}\n\n"
-        "You should build your personality framework with the above configuration and generate content according to the user's requirements."
-        "Please respond in character, maintaining consistency with your configuration. "
-        "Keep responses natural and engaging while staying true to your character."
-        "The above configuration is just your personality framework, you should imitate the tone of voice through these personality frameworks, character, your answer does not need to be completely consistent with the config here, especially when the user's topic does not match his personality framework, you should try to imitate the user's tone of voice to generate content that matches the topic"
+    role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
+    )
+    
+    payload = create_prompt_input_for_tweet(
+        role=role,
+        topic=topic,
+        stance=stance,
+        additional_requirements=additional_requirements,
+        model_name=model_name
     )
 
-    # Compose user prompt
-    user_prompt = (
-        f"Please generate a piece of content that can be sent to social media, with the TOPIC of the content being {topic},"
-        f"the EMOTION of the content is {stance if stance else 'no specific emotion'},"
-        f"the ADDITIONAL REQUIREMENTS of the content are {additional_requirements if additional_requirements else 'none' }."
+    tweet_content = await request_llm(
+        payload=payload,
+        model_name=model_name,
+        # no redis for this request, no need to cache
+        redis_client=None
     )
-
-    payload = {
-        "messages": [
-            {
-                "role": "system",
-                "content": system_prompt
-            },
-            {
-                "role": "user",
-                "content": user_prompt
-            }
-        ],
-        "model": "meta-llama/Llama-3.3-70B-Instruct",
-        "max_tokens": None,
-        "temperature": 1,
-        "top_p": 0.9,
-        "stream": False
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                os.environ['NEBULA_GENERATE_REPLY_API'],
-                json=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {os.environ['NEBULA_API_KEY']}"
-                }
-            )
-            response.raise_for_status()
-            ai_result = response.json()
-            tweet_content = ai_result.get('choices', [{}])[0].get('message', {}).get('content', '')
-    except Exception as e:
-        logger.error(f"AI generation failed: {str(e)}")
-        raise HTTPException(status_code=500, detail="AI generation failed")
 
     # update user credit
     user.total_generated = user.total_generated + 1
@@ -152,11 +139,16 @@ async def generate_tweet(
 
 @router.post("/get-tweet-content", response_model=dict)
 async def get_tweet_content(
+    request: Request,
     tweet_url: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    content = get_x_tweet_content(tweet_url)
+    content = await get_x_tweet_content(
+        tweet_url=tweet_url,
+        redis_client=request.app.state.redis
+    )
+    
     return {
         "status": "Get tweet content successfully",
         "tweet_content": content
@@ -165,88 +157,55 @@ async def get_tweet_content(
 
 @router.post("/generate-tweet-reply", response_model=dict)
 async def generate_tweet_reply(
+    request: Request,
     tweet_url: str = Form(...),
     choose_sentiment: Optional[str] = Form(None),
     additional_context: Optional[str] = Form(None),
+    model_name: Optional[str] = Form(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not check_credits_enough(user):
+    redis_client = request.app.state.redis
+    if not await check_credits_enough(user, redis_client):
         raise HTTPException(
             status_code=400, 
             detail="Not enough credits"
         )
-
-    user_service = UserService(db)
-    role = await user_service.get_user_role_details(user.id)
-    if not role:
-        role = settings.FUTURECITIZEN_ROLE_ID
-
-    # Get tweet content
-    tweet_content = get_x_tweet_content(tweet_url)
-
-    # Build system prompt (same as generate-tweet)
-    system_prompt = (
-        f"You are an AI assistant with the following configuration:\n"
-        f"Name: {role.get('name', '')}\n"
-        f"System Prompt: {role.get('system_prompt', '')}\n"
-        f"Personality Traits: {', '.join(role.get('personality_traits', []))}\n"
-        f"Background Story: {role.get('background_story', '')}\n"
-        f"Category: {role.get('category', '')}\n"
-        f"Language: {role.get('language', '')}\n\n"
-        "You should build your personality framework with the above configuration and generate content according to the user's requirements."
-        "Please respond in character, maintaining consistency with your configuration. "
-        "Keep responses natural and engaging while staying true to your character."
-        "The above configuration is just your personality framework, you should imitate the tone of voice through these personality frameworks, character, your answer does not need to be completely consistent with the config here, especially when the user's topic does not match his personality framework, you should try to imitate the user's tone of voice to generate content that matches the topic"
-    )
-
-    # Compose user prompt for reply
-    user_prompt = (
-        f"Please write a reply to the following tweet: '{tweet_content}'. "
-        f"The sentiment of your reply should be: {choose_sentiment if choose_sentiment else 'no specific sentiment'}. "
-        f"Additional context for your reply: {additional_context if additional_context else 'none'}."
-    )
-
-    payload = {
-        "messages": [
-            {
-                "role": "system",
-                "content": system_prompt
-            },
-            {
-                "role": "user",
-                "content": user_prompt
-            }
-        ],
-        "model": "meta-llama/Llama-3.3-70B-Instruct",
-        "max_tokens": None,
-        "temperature": 1,
-        "top_p": 0.9,
-        "stream": False
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                os.environ['NEBULA_GENERATE_REPLY_API'],
-                json=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {os.environ['NEBULA_API_KEY']}"
-                }
-            )
-            response.raise_for_status()
-            ai_result = response.json()
-            reply_content = ai_result.get('choices', [{}])[0].get('message', {}).get('content', '')
-    except Exception as e:
-        logger.error(f"AI generation failed: {str(e)}")
-        raise HTTPException(status_code=500, detail="AI generation failed")
-
-    if not reply_content:
+    
+    if model_name and model_name not in ALL_AVAILABLE_MODEL_NAMES:
         raise HTTPException(
             status_code=400, 
-            detail="Invalid reply_content"
+            detail="Model name not supported"
         )
+    
+    if not model_name:
+        model_name = "meta-llama/Llama-3.3-70B-Instruct"
+
+    role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
+    )
+
+    tweet_content = await get_x_tweet_content(
+        tweet_url=tweet_url,
+        redis_client=request.app.state.redis
+    )
+
+    payload = create_prompt_input_for_reply_tweet(
+        role=role,
+        tweet_content=tweet_content,
+        choose_sentiment=choose_sentiment,
+        additional_context=additional_context,
+        model_name=model_name
+    )
+
+    reply_content = await request_llm(
+        payload=payload,
+        model_name=model_name,
+        # no redis for this request, no need to cache
+        redis_client=None
+    )
 
     # update user credit
     user.total_generated = user.total_generated + 1

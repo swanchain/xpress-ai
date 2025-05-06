@@ -2,9 +2,17 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/services/apiClient";
 
-function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
+function ReplyTweet({
+  availableCredits,
+  getUser,
+  getTweetHistory,
+  availableModels,
+}) {
   const [url, setUrl] = useState("");
-  const [stance, setStance] = useState("");
+  const [stance, setStance] = useState("neutral");
+  const [model, setModel] = useState(
+    availableModels.length > 0 ? availableModels[0] : ""
+  );
   const [requirements, setRequirements] = useState("");
   const [tweetLoading, setTweetLoading] = useState(false);
   const [op, setOp] = useState("");
@@ -12,37 +20,42 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleGenerate = async () => {
+    setErrorMessage("");
     setReply("");
     try {
       if (availableCredits <= 0) {
         setTweetLoading(false);
-        setErrorMessage("You don't have enough credits. Please purchase more credits.");
+        setErrorMessage(
+          "You don't have enough credits. Please purchase more credits."
+        );
         return;
       }
-      
+
       if (!url) {
         setTweetLoading(false);
         setErrorMessage("Tweet URL is required.");
         return;
       }
-      
+
       if (!op) {
         const opReq = await apiClient.post(
-          `/ai/get-tweet-content`,
-          {
-            tweet_url: url
-          }
+          `/ai/get-tweet-content?tweet_url=${url}`
         );
 
         setOp(opReq.data.tweet_content);
       }
 
+      const formData = new FormData();
+      formData.append("tweet_url", url);
+      if (stance) formData.append("choose_sentiment", stance);
+      if (model) formData.append("model_name", model);
+      if (requirements) formData.append("additional_context", requirements);
+
       const response = await apiClient.post(
         `/ai/generate-tweet-reply`,
+        formData,
         {
-          tweet_url: url,
-          choose_sentiment: stance || undefined,
-          additional_context: requirements || undefined,
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
 
@@ -56,7 +69,10 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
       return response.data.reply_content;
     } catch (err) {
       console.log(err);
-      setErrorMessage(err?.response?.data?.detail || "Failed to generate reply.");
+      setErrorMessage(
+        err?.response?.data?.detail ||
+          "Failed to generate reply. Please try again later."
+      );
     }
   };
 
@@ -114,7 +130,25 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
 
           <div>
             <label className=" font-medium mb-2 flex gap-1" htmlFor="stance">
-              Choose Sentiment (Optional)
+              Model
+            </label>
+            <select
+              id="ai-model"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+            >
+              {availableModels.map((modelName) => (
+                <option key={modelName} value={modelName}>
+                  {modelName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className=" font-medium mb-2 flex gap-1" htmlFor="stance">
+              Stance (Optional)
             </label>
             <select
               id="stance"
@@ -122,7 +156,6 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
               value={stance}
               onChange={(e) => setStance(e.target.value)}
             >
-              <option value="">Choose Sentiment...</option>
               <option value="positive">Positive</option>
               <option value="neutral">Neutral</option>
               <option value="negative">Negative</option>
@@ -134,7 +167,7 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
               className="flex font-medium mb-2 gap-1"
               htmlFor="requirements"
             >
-              Additional Context{" "}
+              Additional Requirements{" "}
               <span className="text-gray-400"> (Optional)</span>
             </label>
             <textarea
@@ -174,8 +207,9 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
             : "opacity-0 pointer-events-none"
         }`}
         onClick={() => {
-          if (reply) {
+          if (reply || errorMessage) {
             setTweetLoading(false);
+            setErrorMessage("");
             setReply("");
           }
         }}
@@ -245,6 +279,8 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
                 </button>
               </div>
             </>
+          ) : errorMessage ? (
+            <div>{errorMessage}</div>
           ) : (
             <>
               <div className="flex flex-row items-center gap-2 my-4">
@@ -296,33 +332,50 @@ function ReplyTweet({ availableCredits, getUser, getTweetHistory }) {
   );
 }
 
-function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
+function CreateTweet({
+  availableCredits,
+  getUser,
+  getTweetHistory,
+  availableModels,
+}) {
   const [topic, setTopic] = useState("");
-  const [stance, setStance] = useState("");
+  const [stance, setStance] = useState("neutral");
+  const [model, setModel] = useState(
+    availableModels.length > 0 ? availableModels[0] : ""
+  );
   const [requirements, setRequirements] = useState("");
   const [tweetLoading, setTweetLoading] = useState(false);
   const [tweet, setTweet] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleGenerate = async () => {
+    setErrorMessage("");
     setTweet("");
     try {
       if (availableCredits <= 0) {
         setTweetLoading(false);
-        setErrorMessage("You don't have enough credits. Please purchase more credits.");
+        setErrorMessage(
+          "You don't have enough credits. Please purchase more credits."
+        );
         return;
       }
-      
+
       if (!topic) {
         setErrorMessage("Topic is required.");
         setTweetLoading(false);
         return;
       }
-      
-      const response = await apiClient.post(`/ai/generate-tweet`, {
-        topic: topic,
-        stance: stance || undefined,
-        additional_requirements: requirements || undefined,
+
+      const formData = new FormData();
+      formData.append("topic", topic);
+      if (stance) formData.append("stance", stance);
+      if (model) formData.append("model_name", model);
+      if (requirements)
+        formData.append("additional_requirements", requirements);
+
+      // console.log(data);
+      const response = await apiClient.post(`/ai/generate-tweet`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       setTweet(response.data.tweet_content);
@@ -335,7 +388,10 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
       return response.data.tweet_content;
     } catch (err) {
       console.log(err);
-      setErrorMessage(err?.response?.data?.detail || "Failed to generate tweet.");
+      setErrorMessage(
+        err?.response?.data?.detail ||
+          "Failed to generate tweet. Please try again later."
+      );
     }
   };
 
@@ -390,6 +446,24 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
 
           <div>
             <label className=" font-medium mb-2 flex gap-1" htmlFor="stance">
+              Model
+            </label>
+            <select
+              id="ai-model"
+              className="form-control w-full rounded-xl border-1 border-gray-200 focus:outline-none p-3 bg-gray-100 focus:ring-4 focus:ring-gray-200"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+            >
+              {availableModels.map((modelName) => (
+                <option key={modelName} value={modelName}>
+                  {modelName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className=" font-medium mb-2 flex gap-1" htmlFor="stance">
               Stance <span className="text-gray-400"> (Optional)</span>
             </label>
             <select
@@ -398,7 +472,6 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
               value={stance}
               onChange={(e) => setStance(e.target.value)}
             >
-              <option value="">Choose stance...</option>
               <option value="positive">Positive</option>
               <option value="neutral">Neutral</option>
               <option value="negative">Negative</option>
@@ -447,7 +520,8 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
             : "opacity-0 pointer-events-none"
         }`}
         onClick={() => {
-          if (tweet) {
+          if (tweet || errorMessage) {
+            setErrorMessage("");
             setTweetLoading(false);
             setTweet("");
           }
@@ -486,6 +560,8 @@ function CreateTweet({ availableCredits, getUser, getTweetHistory }) {
                 </button>
               </div>
             </>
+          ) : errorMessage ? (
+            <div>{errorMessage}</div>
           ) : (
             <>
               <div className="flex flex-row items-center gap-2 my-4">
@@ -544,6 +620,17 @@ export default function TweetPage({
   tweetHistory,
   getTweetHistory,
 }) {
+  const [availableModels, setAvailableModels] = useState([]);
+
+  useEffect(() => {
+    fetchAIModels();
+  }, []);
+
+  async function fetchAIModels() {
+    const response = await apiClient.get("/ai/get-all-available-model-names");
+    setAvailableModels(response.data.model_names);
+  }
+
   return (
     <div className="lg:min-w-2/3 lg:max-w-2/3  mx-auto rounded-2xl flex mt-20">
       {selectedTab === "create" && (
@@ -558,6 +645,7 @@ export default function TweetPage({
             availableCredits={availableCredits}
             getUser={getUser}
             getTweetHistory={getTweetHistory}
+            availableModels={availableModels}
           />
           <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>
@@ -574,6 +662,7 @@ export default function TweetPage({
             availableCredits={availableCredits}
             getUser={getUser}
             getTweetHistory={getTweetHistory}
+            availableModels={availableModels}
           />
           <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>
