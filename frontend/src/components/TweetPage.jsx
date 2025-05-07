@@ -339,6 +339,7 @@ function CreateTweet({
   getUser,
   getTweetHistory,
   availableModels,
+  betaVersion
 }) {
   const [topic, setTopic] = useState("");
   const [stance, setStance] = useState("neutral");
