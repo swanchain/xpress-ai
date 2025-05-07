@@ -8,6 +8,7 @@ function ReplyTweet({
   getTweetHistory,
   availableModels,
   betaVersion,
+  setBetaVersion,
 }) {
   const [url, setUrl] = useState("");
   const [stance, setStance] = useState("neutral");
@@ -105,8 +106,26 @@ function ReplyTweet({
   return (
     <div className="h-full w-full col-span-2  mx-auto bg-white rounded-2xl border-gray-200 border-1 flex flex-col">
       <div>
-        <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
-          Generate Reply
+        <h2 className="font-medium text-xl mb-1 justify-between items-center flex flex-row border-b-1 p-8 border-gray-200 w-full">
+          <p className="flex-1 text-left">Generate Reply</p>
+          <div className=" flex bg-black/5 p-1 rounded-[12px] text-sm">
+            <button
+              onClick={() => setBetaVersion("v1")}
+              className={`px-2 py-2 rounded-xl font-medium  ${
+                betaVersion != "v2" ? "bg-white" : "hover:bg-black/5"
+              }`}
+            >
+              <span className="">v1</span>
+            </button>
+            <button
+              onClick={() => setBetaVersion("v2")}
+              className={`px-2 py-2 rounded-xl font-medium  ${
+                betaVersion == "v2" ? "bg-white" : "hover:bg-black/5"
+              }`}
+            >
+              <span className="">v2</span>
+            </button>
+          </div>
         </h2>
         <div className="space-y-6 p-8">
           <div>
@@ -339,7 +358,8 @@ function CreateTweet({
   getUser,
   getTweetHistory,
   availableModels,
-  betaVersion
+  betaVersion,
+  setBetaVersion,
 }) {
   const [topic, setTopic] = useState("");
   const [stance, setStance] = useState("neutral");
@@ -424,8 +444,26 @@ function CreateTweet({
   return (
     <div className="h-full w-full col-span-2 mx-auto bg-white rounded-2xl border-gray-200 border-1 flex flex-col">
       <div>
-        <h2 className="font-medium text-xl mb-1 justify-start flex flex-row border-b-1 p-8 border-gray-200">
-          Create New Tweet
+        <h2 className="font-medium text-xl mb-1 justify-between items-center flex flex-row border-b-1 p-8 border-gray-200 w-full">
+          <p className="flex-1 text-left">Create New Tweet</p>
+          <div className=" flex bg-black/5 p-1 rounded-[12px] text-sm">
+            <button
+              onClick={() => setBetaVersion("v1")}
+              className={`px-2 py-2 rounded-xl font-medium  ${
+                betaVersion != "v2" ? "bg-white" : "hover:bg-black/5"
+              }`}
+            >
+              <span className="">v1</span>
+            </button>
+            <button
+              onClick={() => setBetaVersion("v2")}
+              className={`px-2 py-2 rounded-xl font-medium  ${
+                betaVersion == "v2" ? "bg-white" : "hover:bg-black/5"
+              }`}
+            >
+              <span className="">v2</span>
+            </button>
+          </div>
         </h2>
         <div className="space-y-6 p-8">
           <div>
@@ -625,6 +663,7 @@ export default function TweetPage({
   tweetHistory,
   getTweetHistory,
   betaVersion,
+  setBetaVersion,
 }) {
   const [availableModels, setAvailableModels] = useState([]);
 
@@ -653,6 +692,7 @@ export default function TweetPage({
             getTweetHistory={getTweetHistory}
             availableModels={availableModels}
             betaVersion={betaVersion}
+            setBetaVersion={setBetaVersion}
           />
           <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>
@@ -671,6 +711,7 @@ export default function TweetPage({
             getTweetHistory={getTweetHistory}
             availableModels={availableModels}
             betaVersion={betaVersion}
+            setBetaVersion={setBetaVersion}
           />
           <RecentTweets tweetHistory={tweetHistory} />
         </motion.div>

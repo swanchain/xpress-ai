@@ -141,6 +141,7 @@ export default function Home() {
               tweetHistory={tweetHistory}
               getTweetHistory={getTweetHistory}
               betaVersion={betaVersion}
+              setBetaVersion={setBetaVersion}
             />
           ) : (
             <LandingPage setBetaVersion={setBetaVersion} user={user} />
