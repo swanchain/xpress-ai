@@ -106,3 +106,18 @@ async def get_user_tweets_history(
         logger.info(f"Cache set for {cache_key}")
 
     return tweet_texts
+
+
+async def get_user_tweet_history_by_id(
+    x_user_id: int,
+    db: AsyncSession
+) -> Optional[List[str]]:
+    tweet_history = await get_one_object_by_filter(
+        db,
+        TweetHistory,
+        x_user_id=x_user_id
+    )
+
+    if tweet_history:
+        return tweet_history.tweet_history
+    return []

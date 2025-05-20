@@ -247,3 +247,109 @@ Additional Context: {additional_context if additional_context else 'none'}
     }
 
     return payload
+
+
+
+def create_prompt_input_for_tweet_based_on_history(
+    tweet_history: List[str],
+    topic: str,
+    stance: Optional[str] = None,
+    additional_requirements: Optional[str] = None,
+    model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
+):
+    system_prompt = f"""
+You are an AI that writes in the unique voice and style of this specific Twitter user. Your goal is to generate content that sounds authentically like them, regardless of the topic.
+
+USER TWEET HISTORY:
+{tweet_history}
+
+IMPORTANT INSTRUCTIONS:
+1. Focus primarily on MIMICKING THE USER'S TWEET HISTORY if there is any, not their typical topics
+2. Apply their distinctive communication patterns regardless of subject matter
+3. Your task is to write as if this person were writing about the requested topic
+4. Do not try to redirect toward topics mentioned in their profile
+5. Accept that people discuss diverse topics outside their usual interests
+6. Maintain their authentic voice (tone, humor style, sentence structure, word choice) while addressing ANY topic requested
+
+Write a tweet or reply that this specific user might post, focusing on capturing their authentic voice while addressing the requested topic. The content should feel natural coming from them, even if the topic is different from what they typically discuss.
+"""
+
+    # Compose user prompt
+    user_prompt = f"""
+CONTENT REQUEST:
+Topic: {topic}
+Emotional Tone: {stance if stance else "maintain user's natural tone"}
+Additional Requirements: {additional_requirements if additional_requirements else 'none'}
+"""
+
+    payload = {
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ],
+        "model": model_name,
+        "max_tokens": None,
+        "temperature": 0.5,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    return payload
+
+
+def create_prompt_input_for_reply_tweet_based_on_history(
+    tweet_history: List[str],
+    tweet_content: str,
+    choose_sentiment: Optional[str] = None,
+    additional_context: Optional[str] = None,
+    model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
+):
+    system_prompt = f"""
+    You are an AI that crafts Twitter replies in the exact voice and communication style of a specific user. Your goal is to create responses that sound authentically like them, regardless of the tweet topic you're responding to.
+
+USER TWEET HISTORY:
+{tweet_history}
+
+KEY INSTRUCTIONS:
+1. Focus on Tweet content that the user wants to reply to
+2. Mimic the user's writing style based on the tweet history if there is any, word choice, and sentence structure to any reply
+3. Maintain their typical level of formality/informality, humor style, and engagement approach
+4. Do not force connections to topics mentioned in their tweet history if irrelevant to the conversation
+5. Remember that authentic people respond naturally to all kinds of topics, even ones outside their usual interests
+6. If there is additional context provided, use it to guide the reply
+
+Generate a reply that this specific user might post, focusing on capturing their authentic voice while addressing the content of the tweet.
+"""
+    
+    user_prompt = f"""
+REPLY REQUEST:
+Tweet Content to Reply to: {tweet_content}
+Desired Sentiment: {choose_sentiment if choose_sentiment else "maintain user's natural response style"}
+Additional Context: {additional_context if additional_context else 'none'}
+"""
+
+    payload = {
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ],
+        "model": model_name,
+        "max_tokens": None,
+        "temperature": 0.5,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    return payload
