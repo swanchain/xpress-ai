@@ -56,7 +56,7 @@ from app.services.api_service import (
 )
 from app.services.x_service import get_user_tweet_history_by_id
 
-router = APIRouter(prefix="/ai-dev", tags=["AI Analyze Dev"])
+router = APIRouter(prefix="/ai", tags=["AI Analyze Dev"])
 
 logger = logging.getLogger()
 
