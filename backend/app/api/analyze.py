@@ -47,14 +47,11 @@ from app.services.user_service import UserService
 from app.services.llm_service import request_llm
 from app.services.prompt_service import (
     create_prompt_input_for_tweet,
-    create_prompt_input_for_reply_tweet,
-    create_prompt_input_for_tweet_based_on_history,
-    create_prompt_input_for_reply_tweet_based_on_history
+    create_prompt_input_for_reply_tweet
 )
 from app.services.api_service import (
     get_role_details_from_future_citizen
 )
-from app.services.x_service import get_user_tweet_history_by_id
 
 router = APIRouter(prefix="/ai", tags=["AI Analyze"])
 
@@ -67,7 +64,6 @@ async def get_all_available_model_names():
         "status": "Get all available model names successfully",
         "model_names": ALL_AVAILABLE_MODEL_NAMES
     }
-
 
 @router.post("/generate-tweet", response_model=dict)
 async def generate_tweet(
@@ -95,13 +91,14 @@ async def generate_tweet(
     if not model_name:
         model_name = "meta-llama/Llama-3.3-70B-Instruct"
 
-    tweet_history = await get_user_tweet_history_by_id(
-        x_user_id=user.x_user_id,
-        db=db
+    role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
     )
-
-    payload = create_prompt_input_for_tweet_based_on_history(
-        tweet_history=tweet_history,
+    
+    payload = create_prompt_input_for_tweet(
+        role=role,
         topic=topic,
         stance=stance,
         additional_requirements=additional_requirements,
@@ -139,7 +136,6 @@ async def generate_tweet(
         "tweet_content": tweet_content,
         "user": user.to_dict()
     }
-
 
 @router.post("/get-tweet-content", response_model=dict)
 async def get_tweet_content(
@@ -185,9 +181,10 @@ async def generate_tweet_reply(
     if not model_name:
         model_name = "meta-llama/Llama-3.3-70B-Instruct"
 
-    tweet_history = await get_user_tweet_history_by_id(
-        x_user_id=user.x_user_id,
-        db=db
+    role_id = user.ai_role_id if user.ai_role_id else settings.FUTURECITIZEN_ROLE_ID
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
     )
 
     tweet_content = await get_x_tweet_content(
@@ -195,8 +192,8 @@ async def generate_tweet_reply(
         redis_client=request.app.state.redis
     )
 
-    payload = create_prompt_input_for_reply_tweet_based_on_history(
-        tweet_history=tweet_history,
+    payload = create_prompt_input_for_reply_tweet(
+        role=role,
         tweet_content=tweet_content,
         choose_sentiment=choose_sentiment,
         additional_context=additional_context,
