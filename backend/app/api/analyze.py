@@ -53,7 +53,7 @@ from app.services.api_service import (
     get_role_details_from_future_citizen
 )
 
-router = APIRouter(prefix="/ai-v0", tags=["AI Analyze"])
+router = APIRouter(prefix="/ai", tags=["AI Analyze"])
 
 logger = logging.getLogger()
 
