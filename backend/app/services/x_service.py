@@ -112,6 +112,7 @@ async def get_user_tweet_history_by_id(
     x_user_id: int,
     db: AsyncSession
 ) -> Optional[List[str]]:
+    x_user_id = str(x_user_id)
     tweet_history = await get_one_object_by_filter(
         db,
         TweetHistory,
