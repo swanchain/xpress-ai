@@ -37,7 +37,8 @@ async def update_user_ai_role():
                     user_tweets = await get_user_tweets_history(
                         x_user_id=x_user_id,
                         x_user_name=x_user_name,
-                        max_history_count=max_history_count
+                        max_history_count=max_history_count,
+                        db=session
                     )
                 
                     prompt = create_prompt_for_user_role_data(

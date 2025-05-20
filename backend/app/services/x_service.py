@@ -6,7 +6,11 @@ import logging
 from dotenv import load_dotenv
 from redis.asyncio import Redis
 import json
+import time
 import hashlib
+from app.models.history import TweetHistory
+from app.database.session import get_one_object_by_filter
+from sqlalchemy.ext.asyncio import AsyncSession
 
 load_dotenv()
 
@@ -31,7 +35,8 @@ async def get_user_tweets_history(
     x_user_id: Optional[int] = None,
     x_user_name: Optional[str] = None,
     max_history_count: int = 10,
-    redis_client: Optional[Redis] = None
+    redis_client: Optional[Redis] = None,
+    db: Optional[AsyncSession] = None
 ) -> Optional[List[str]]:
     
     if not x_user_id and not x_user_name:
@@ -72,6 +77,29 @@ async def get_user_tweets_history(
         return []
 
     tweet_texts = [tweet.text for tweet in tweets.data]
+
+    if db:
+        # update tweet history or create new tweet history
+        tweet_history = await get_one_object_by_filter(
+            db,
+            TweetHistory,
+            x_user_id=x_user_id
+        )
+
+        if tweet_history:
+            tweet_history.tweet_history = tweet_texts
+            tweet_history.updated_at = int(time.time())
+            await db.commit()
+        else:
+            tweet_history = TweetHistory(
+                x_user_id=x_user_id,
+                x_screen_name=user.x_screen_name,
+                tweet_history=tweet_texts,
+                created_at=int(time.time()),
+                updated_at=int(time.time())
+            )
+            db.add(tweet_history)
+            await db.commit()
 
     if redis_client:
         await redis_client.setex(cache_key, CACHE_TTL, json.dumps(tweet_texts))

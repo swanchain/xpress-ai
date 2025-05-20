@@ -69,7 +69,8 @@ async def refresh_my_vibe(
         user_tweets = await get_user_tweets_history(
             x_user_id=x_user_id,
             x_user_name=x_user_name,
-            max_history_count=max_history_count
+            max_history_count=max_history_count,
+            db=db
         )
     except:
         raise HTTPException(
