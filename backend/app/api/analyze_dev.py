@@ -61,6 +61,13 @@ router = APIRouter(prefix="/ai-dev", tags=["AI Analyze Dev"])
 logger = logging.getLogger()
 
 
+@router.get("/get-all-available-model-names")
+async def get_all_available_model_names():
+    return {
+        "status": "Get all available model names successfully",
+        "model_names": ALL_AVAILABLE_MODEL_NAMES
+    }
+
 
 @router.post("/generate-tweet", response_model=dict)
 async def generate_tweet(
@@ -133,6 +140,24 @@ async def generate_tweet(
         "user": user.to_dict()
     }
 
+
+@router.post("/get-tweet-content", response_model=dict)
+async def get_tweet_content(
+    request: Request,
+    tweet_url: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    content = await get_x_tweet_content(
+        tweet_url=tweet_url,
+        redis_client=request.app.state.redis
+    )
+    
+    return {
+        "status": "Get tweet content successfully",
+        "tweet_content": content
+    }
+    
 
 @router.post("/generate-tweet-reply", response_model=dict)
 async def generate_tweet_reply(
@@ -208,4 +233,34 @@ async def generate_tweet_reply(
         "status": "Get reply content successfully",
         "reply_content": reply_content,
         "user": user.to_dict()
+    }
+
+@router.get("/get-generate-history")
+async def get_generate_history(
+    page: int = 1,
+    size: int = 10,
+    generate_type: str = None,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    offset = (page - 1) * size
+
+    total_query = select(func.count()).select_from(GenerateHistory).filter(GenerateHistory.uuid == user.uuid)
+    query = select(GenerateHistory).filter(GenerateHistory.uuid == user.uuid)
+
+    if generate_type:
+        total_query = total_query.filter(GenerateHistory.generate_type == generate_type)
+        query = query.filter(GenerateHistory.generate_type == generate_type)
+
+    total_result = await db.execute(total_query)
+    total = total_result.scalar_one_or_none() or 0
+    query_result = await db.execute(query.offset(offset).limit(size))
+    result = query_result.scalars().all()
+
+    return {
+        "status": "Get generate history successfully",
+        "total": total,
+        "histories": result,
+        "page": page,
+        "size": len(result)
     }
