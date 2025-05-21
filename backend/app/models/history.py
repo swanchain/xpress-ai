@@ -28,3 +28,14 @@ class GenerateHistory(Base):
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }
+    
+
+class TweetHistory(Base):
+    __tablename__ = 'tweet_history'
+
+    id = mapped_column(Integer, primary_key=True, autoincrement=True)
+    x_user_id = mapped_column(String(255), nullable=False)
+    x_screen_name = mapped_column(String(255), nullable=False)
+    tweet_history = mapped_column(JSON, nullable=False)
+    created_at = mapped_column(BigInteger, nullable=False)
+    updated_at = mapped_column(BigInteger, nullable=False)

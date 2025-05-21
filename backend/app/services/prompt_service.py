@@ -247,3 +247,140 @@ Additional Context: {additional_context if additional_context else 'none'}
     }
 
     return payload
+
+
+
+def create_prompt_input_for_tweet_based_on_history(
+    tweet_history: List[str],
+    topic: str,
+    stance: Optional[str] = None,
+    additional_requirements: Optional[str] = None,
+    model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
+):
+    if tweet_history:
+        system_prompt = f"""
+You are an AI that writes in the unique voice and style of this specific Twitter user. Your goal is to generate content that sounds authentically like them, regardless of the topic.
+
+USER TWEET HISTORY:
+{tweet_history}
+
+IMPORTANT INSTRUCTIONS:
+1. Focus primarily on MIMICKING THE USER'S TWEET HISTORY, analyzing their writing patterns and style
+2. Apply their distinctive communication patterns regardless of subject matter
+3. Your task is to write as if this person were writing about the requested topic
+4. Do not try to redirect toward topics mentioned in their history if irrelevant
+5. Accept that people discuss diverse topics outside their usual interests
+6. Maintain their authentic voice (tone, humor style, sentence structure, word choice) while addressing ANY topic requested
+
+Write a tweet that this specific user might post, focusing on capturing their authentic voice while addressing the requested topic. The content should feel natural coming from them, even if the topic is different from what they typically discuss.
+"""
+    else:
+        system_prompt = f"""
+You are an AI that writes tweets in a neutral, professional style. Your goal is to generate content that is clear, engaging, and appropriate for a general audience.
+
+IMPORTANT INSTRUCTIONS:
+1. Write in a balanced, neutral tone that avoids extreme positions
+2. Keep the language clear and accessible to a broad audience
+3. Focus on the topic while maintaining professionalism
+4. Avoid controversial or polarizing language
+5. Use appropriate hashtags and mentions if relevant
+6. Keep the content concise and to the point
+
+Write a tweet about the requested topic that would be appropriate for a general audience.
+"""
+
+    # Compose user prompt
+    user_prompt = f"""
+CONTENT REQUEST:
+Topic: {topic}
+Emotional Tone: {stance if stance else "maintain user's natural tone"}
+Additional Requirements: {additional_requirements if additional_requirements else 'none'}
+"""
+
+    payload = {
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ],
+        "model": model_name,
+        "max_tokens": None,
+        "temperature": 0.5,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    return payload
+
+
+def create_prompt_input_for_reply_tweet_based_on_history(
+    tweet_history: List[str],
+    tweet_content: str,
+    choose_sentiment: Optional[str] = None,
+    additional_context: Optional[str] = None,
+    model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
+):
+    if tweet_history:
+        system_prompt = f"""
+    You are an AI that crafts Twitter replies in the exact voice and communication style of a specific user. Your goal is to create responses that sound authentically like them, regardless of the tweet topic you're responding to.
+
+USER TWEET HISTORY:
+{tweet_history}
+
+KEY INSTRUCTIONS:
+1. Focus on Tweet content that the user wants to reply to
+2. Mimic the user's writing style based on the tweet history, word choice, and sentence structure
+3. Maintain their typical level of formality/informality, humor style, and engagement approach
+4. Do not force connections to topics mentioned in their tweet history if irrelevant to the conversation
+5. Remember that authentic people respond naturally to all kinds of topics, even ones outside their usual interests
+6. If there is additional context provided, use it to guide the reply
+
+Generate a reply that this specific user might post, focusing on capturing their authentic voice while addressing the content of the tweet.
+"""
+    else:
+        system_prompt = f"""
+    You are an AI that crafts Twitter replies in a neutral, professional style. Your goal is to create responses that are clear, engaging, and appropriate for a general audience.
+
+KEY INSTRUCTIONS:
+1. Focus on providing a clear and relevant response to the tweet content
+2. Maintain a balanced, professional tone that avoids extreme positions
+3. Keep the language clear and accessible to a broad audience
+4. Avoid controversial or polarizing language
+5. If there is additional context provided, use it to guide the reply
+6. Keep the response concise and to the point
+7. Use appropriate hashtags and mentions if relevant
+
+Generate a reply that would be appropriate for a general audience while addressing the content of the tweet.
+"""
+    
+    user_prompt = f"""
+REPLY REQUEST:
+Tweet Content to Reply to: {tweet_content}
+Desired Sentiment: {choose_sentiment if choose_sentiment else "maintain user's natural response style"}
+Additional Context: {additional_context if additional_context else 'none'}
+"""
+
+    payload = {
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ],
+        "model": model_name,
+        "max_tokens": None,
+        "temperature": 0.5,
+        "top_p": 0.9,
+        "stream": False
+    }
+
+    return payload
