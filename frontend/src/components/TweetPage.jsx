@@ -39,7 +39,7 @@ function ReplyTweet({
 
       if (!op) {
         const opReq = await apiClient.post(
-          `/ai/get-tweet-content?tweet_url=${url}`
+          `/ai/get-tweet-content?tweet_url=${encodeURIComponent(url)}`
         );
 
         setOp(opReq.data.tweet_content);
