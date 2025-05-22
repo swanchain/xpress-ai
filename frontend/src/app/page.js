@@ -129,6 +129,7 @@ export default function Home() {
           setSelectedTab={setSelectedTab}
           setShowModal={setShowModal}
           availableCredits={availableCredits}
+          gettingStartedClicked={gettingStartedClicked}
         />
 
         {/* Main Content */}

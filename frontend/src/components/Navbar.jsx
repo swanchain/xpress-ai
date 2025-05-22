@@ -19,6 +19,7 @@ export default function Navbar({
   setSelectedTab,
   setShowModal,
   availableCredits,
+  gettingStartedClicked,
 }) {
   const { connectX } = useConnectX();
   const { disconnect } = useDisconnect();
@@ -73,7 +74,7 @@ export default function Navbar({
         <div className="font-semibold text-xl flex items-center gap-x-2">
           <img src="/chat-bot.png" /> XpressAI
         </div>
-        {user ? (
+        {user && gettingStartedClicked ? (
           <div className=" flex bg-black/5 p-1 rounded-[12px]">
             <button
               onClick={() => setSelectedTab("create")}
@@ -98,20 +99,6 @@ export default function Navbar({
           <></>
         )}
         <div className="flex items-center space-x-2">
-          {user && (
-            <button
-              className="black-btn text-base"
-              onClick={() => setShowModal(true)}
-            >
-              <span className="sm:flex flex-row justify-center items-center gap-x-2 hidden">
-                <CoinIcon />{" "}
-                <span className="ml-2">{availableCredits} Credits</span>
-              </span>
-              <span className="flex flex-row justify-center items-center sm:hidden">
-                <CoinIcon /> <span className="ml-2">{availableCredits}</span>
-              </span>
-            </button>
-          )}
           {/* {user && (
             <div className="hidden sm:block px-2 font-semibold">
               {user.x_screen_name}
@@ -131,6 +118,15 @@ export default function Navbar({
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-3 lg:w-60 sm:w-fit bg-white/90 rounded-xl shadow-lg z-50">
                   <ul className=" text-gray-700 flex flex-col gap-1">
+                    <li
+                      onClick={() => setShowModal(true)}
+                      className="p-4 m-2 hover:bg-gray-100 cursor-pointer rounded-xl flex items-center gap-2"
+                    >
+                      <CoinIcon /> {availableCredits} Credits
+                    </li>
+                    <li className=" flex px-4 ">
+                      <div className="w-full border-t-1 border-gray-300"></div>
+                    </li>
                     <li
                       onClick={getUserAIDetails}
                       className="p-4 m-2 hover:bg-gray-100 cursor-pointer rounded-xl flex items-center gap-2"
