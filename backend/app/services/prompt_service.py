@@ -140,6 +140,15 @@ def extract_tone_from_role(role: dict):
     Writing Style: {writing_style}
     """
 
+
+def extract_style_from_role(role: dict):
+    
+    tone_profile = role.get(ROLE_KEY_MAPPING["Tone Profile"], '')
+    
+    return f"""
+    Communication Style: {tone_profile}
+    """
+
 def create_prompt_input_for_tweet(
     role: dict,
     topic: str,
@@ -251,21 +260,27 @@ Additional Context: {additional_context if additional_context else 'none'}
 
 
 def create_prompt_input_for_tweet_based_on_history(
+    role: dict,
     tweet_history: List[str],
     topic: str,
     stance: Optional[str] = None,
     additional_requirements: Optional[str] = None,
     model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
 ):
+    style_prompt = extract_style_from_role(role) if role else ''
+    
     if tweet_history:
         system_prompt = f"""
 You are an AI that writes in the unique voice and style of this specific Twitter user. Your goal is to generate content that sounds authentically like them, regardless of the topic.
+
+USER VOICE PROFILE:
+{style_prompt}
 
 USER TWEET HISTORY:
 {tweet_history}
 
 IMPORTANT INSTRUCTIONS:
-1. Focus primarily on MIMICKING THE USER'S TWEET HISTORY, analyzing their writing patterns and style
+1. Focus primarily on MIMICKING THE USER'S TWEET HISTORY, analyzing their writing patterns and style, use USER VOICE PROFILE as a reference if provided
 2. Apply their distinctive communication patterns regardless of subject matter
 3. Your task is to write as if this person were writing about the requested topic
 4. Do not try to redirect toward topics mentioned in their history if irrelevant
@@ -319,22 +334,28 @@ Additional Requirements: {additional_requirements if additional_requirements els
 
 
 def create_prompt_input_for_reply_tweet_based_on_history(
+    role: dict,
     tweet_history: List[str],
     tweet_content: str,
     choose_sentiment: Optional[str] = None,
     additional_context: Optional[str] = None,
     model_name: Optional[str] = "meta-llama/Llama-3.3-70B-Instruct",
 ):
+    style_prompt = extract_style_from_role(role) if role else ''
+    
     if tweet_history:
         system_prompt = f"""
     You are an AI that crafts Twitter replies in the exact voice and communication style of a specific user. Your goal is to create responses that sound authentically like them, regardless of the tweet topic you're responding to.
 
+USER VOICE PROFILE:
+{style_prompt}
+    
 USER TWEET HISTORY:
 {tweet_history}
 
 KEY INSTRUCTIONS:
 1. Focus on Tweet content that the user wants to reply to
-2. Mimic the user's writing style based on the tweet history, word choice, and sentence structure
+2. Mimic the user's writing style based on the tweet history, word choice, and sentence structure, use USER VOICE PROFILE as a reference if provided
 3. Maintain their typical level of formality/informality, humor style, and engagement approach
 4. Do not force connections to topics mentioned in their tweet history if irrelevant to the conversation
 5. Remember that authentic people respond naturally to all kinds of topics, even ones outside their usual interests

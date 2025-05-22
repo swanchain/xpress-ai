@@ -65,7 +65,7 @@ async def root():
     return {"message": "Welcome to XPressAI API"}
 
 app.include_router(users.router)
-app.include_router(analyze.router)
+# app.include_router(analyze.router)
 app.include_router(analyze_dev.router)
 app.include_router(ai_vibe.router)
 app.include_router(fine_tuning.router)
