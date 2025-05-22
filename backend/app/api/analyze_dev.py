@@ -56,7 +56,7 @@ from app.services.api_service import (
 )
 from app.services.x_service import get_user_tweet_history_by_id
 
-router = APIRouter(prefix="/ai/v2", tags=["AI Analyze V2"])
+router = APIRouter(prefix="/ai", tags=["AI Analyze"])
 
 logger = logging.getLogger()
 
@@ -100,7 +100,14 @@ async def generate_tweet(
         db=db
     )
 
+    role_id = user.ai_role_id
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
+    ) if role_id else None
+
     payload = create_prompt_input_for_tweet_based_on_history(
+        role=role,
         tweet_history=tweet_history,
         topic=topic,
         stance=stance,
@@ -195,7 +202,14 @@ async def generate_tweet_reply(
         redis_client=request.app.state.redis
     )
 
+    role_id = user.ai_role_id
+    role = await get_role_details_from_future_citizen(
+        ai_role_id=role_id,
+        redis_client=redis_client
+    ) if role_id else None
+
     payload = create_prompt_input_for_reply_tweet_based_on_history(
+        role=role,
         tweet_history=tweet_history,
         tweet_content=tweet_content,
         choose_sentiment=choose_sentiment,

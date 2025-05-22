@@ -1,6 +1,7 @@
 import logging
 from typing import List, Optional
 from tweepy.errors import TooManyRequests
+import time
 
 from app.models.user import User
 from app.services.user_service import UserService
@@ -60,6 +61,8 @@ async def update_user_ai_role():
                     user.ai_role_id = ai_role_id
                     session.add(user)
                     await session.commit()
+
+                    time.sleep(10)
 
                 except TooManyRequests:
                     logger.error("Twitter API rate limit exceeded")

@@ -24,7 +24,7 @@ scheduler = AsyncIOScheduler()
 scheduler.add_job(
     update_user_ai_role, 
     "interval", 
-    seconds=60,
+    seconds=600,
     max_instances=1,
     replace_existing=False,
     next_run_time=datetime.now()
@@ -65,7 +65,7 @@ async def root():
     return {"message": "Welcome to XPressAI API"}
 
 app.include_router(users.router)
-app.include_router(analyze.router)
+# app.include_router(analyze.router)
 app.include_router(analyze_dev.router)
 app.include_router(ai_vibe.router)
 app.include_router(fine_tuning.router)

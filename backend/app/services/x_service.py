@@ -83,7 +83,7 @@ async def get_user_tweets_history(
         tweet_history = await get_one_object_by_filter(
             db,
             TweetHistory,
-            x_user_id=x_user_id
+            x_user_id=str(x_user_id)
         )
 
         if tweet_history:
@@ -92,8 +92,8 @@ async def get_user_tweets_history(
             await db.commit()
         else:
             tweet_history = TweetHistory(
-                x_user_id=x_user_id,
-                x_screen_name=user.x_screen_name,
+                x_user_id=str(x_user_id),
+                x_screen_name=x_user_name,
                 tweet_history=tweet_texts,
                 created_at=int(time.time()),
                 updated_at=int(time.time())

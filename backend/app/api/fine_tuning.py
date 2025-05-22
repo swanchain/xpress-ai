@@ -11,7 +11,7 @@ from urllib.parse import urlencode, urljoin
 import os
 
 from eth_account.messages import encode_defunct
-from fastapi import APIRouter, Form, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Form, Depends, HTTPException, status, Request, Form
 from fastapi import BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlalchemy import select, func
@@ -29,7 +29,8 @@ from app.services.prompt_service import (
     create_prompt_for_user_role_data,
     create_future_citizen_role_input,
     create_prompt_input_for_tweet,
-    create_prompt_input_for_reply_tweet
+    create_prompt_input_for_reply_tweet,
+    create_prompt_input_for_tweet_based_on_history
 )
 from app.services.llm_service import (
     request_llm
@@ -37,6 +38,7 @@ from app.services.llm_service import (
 from app.services.api_service import (
     send_role_to_future_citizen
 )
+from app.services.llm_service import request_gemini_llm
 
 router = APIRouter(prefix="/fine-tuning", tags=["Fine Tuning"])
 router_for_tweets = APIRouter(prefix="/fine-tuning-for-tweets", tags=["Fine Tuning For Tweets"])
@@ -350,4 +352,33 @@ async def request_llm_for_reply_tweet(
     return {
         "status": "Generate tweet successfully",
         "reply_tweet": reply_tweet
+    }
+
+
+@router_for_tweets.post("/test-model", response_model=dict)
+async def test_model(
+    topic: str = Form(...),
+    stance: Optional[str] = Form(None, description="positive, negative, neutral"),
+    model_name: str = Form(...)
+):
+    payload = create_prompt_input_for_tweet_based_on_history(
+        role=None,
+        tweet_history=None,
+        topic=topic,
+        stance="positive",
+        additional_requirements=None
+    )
+
+    logging.info(payload)
+    
+    content = await request_llm(
+        payload=payload,
+        # model_name="google/gemini-2.5-pro-preview"
+        # model_name="google/gemini-2.5-flash-preview"
+        model_name=model_name
+    )
+    
+    return {
+        "status": "Get Gemini model message successfully",
+        "message": content
     }
