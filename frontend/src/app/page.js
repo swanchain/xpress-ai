@@ -24,6 +24,7 @@ export default function Home() {
   const [transactionHash, setTransactionHash] = useState(null)
   const [availableCredits, setAvailableCredits] = useState(null)
   const [tweetHistory, setTweetHistory] = useState([])
+  const [gettingStartedClicked, setGettingStartedClicked] = useState(false)
 
   const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
   const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL
@@ -132,7 +133,7 @@ export default function Home() {
 
         {/* Main Content */}
         <main className="flex-grow flex flex-col items-center justify-center px-4 text-center gap-5 z-30">
-          {user ? (
+          {gettingStartedClicked ? (
             <TweetPage
               selectedTab={selectedTab}
               availableCredits={availableCredits}
@@ -141,7 +142,10 @@ export default function Home() {
               getTweetHistory={getTweetHistory}
             />
           ) : (
-            <LandingPage />
+            <LandingPage
+              user={user}
+              setGettingStartedClicked={setGettingStartedClicked}
+            />
           )}
         </main>
       </div>

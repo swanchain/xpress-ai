@@ -1,6 +1,6 @@
 import useConnectX from "@/hooks/useConnectX";
 import Head from "next/head";
-export default function LandingPage() {
+export default function LandingPage({ user, setGettingStartedClicked }) {
   const { connectX } = useConnectX();
 
   return (
@@ -23,7 +23,10 @@ export default function LandingPage() {
         <br />
         powered by artificial intelligence
       </p>
-      <button className="black-btn" onClick={connectX}>
+      <button
+        className="black-btn"
+        onClick={user ? () => setGettingStartedClicked(true) : connectX}
+      >
         Get Started
       </button>
     </>
