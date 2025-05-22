@@ -193,6 +193,12 @@ async def get_user_role_details(
                 status_code=404,
                 detail="Role details not found"
             )
+        
+        try:
+            role_details['background_story'] = role_details['background_story'].strip('*').strip()
+            role_details['category'] = role_details['category'].strip('*').strip()
+        except:
+            pass
             
         return role_details
         
