@@ -360,6 +360,7 @@ KEY INSTRUCTIONS:
 4. Do not force connections to topics mentioned in their tweet history if irrelevant to the conversation
 5. Remember that authentic people respond naturally to all kinds of topics, even ones outside their usual interests
 6. If there is additional context provided, use it to guide the reply
+7. Do not add any hashtags or mentions or 'RT' to the tweet
 
 Generate a reply that this specific user might post, focusing on capturing their authentic voice while addressing the content of the tweet.
 """
