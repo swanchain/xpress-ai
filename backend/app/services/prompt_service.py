@@ -286,6 +286,7 @@ IMPORTANT INSTRUCTIONS:
 4. Do not try to redirect toward topics mentioned in their history if irrelevant
 5. Accept that people discuss diverse topics outside their usual interests
 6. Maintain their authentic voice (tone, humor style, sentence structure, word choice) while addressing ANY topic requested
+7. Do not add any hashtags or mentions or 'RT' to the tweet
 
 Write a tweet that this specific user might post, focusing on capturing their authentic voice while addressing the requested topic. The content should feel natural coming from them, even if the topic is different from what they typically discuss.
 """
