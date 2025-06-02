@@ -287,7 +287,7 @@ IMPORTANT INSTRUCTIONS:
 5. Accept that people discuss diverse topics outside their usual interests
 6. Maintain their authentic voice (tone, humor style, sentence structure, word choice) while addressing ANY topic requested
 7. Do not add any hashtags or mentions or 'RT' to the tweet
-8. Do not mention any other information that you cannot provide yourself, such as some graphs, data, or statistics, etc
+7. Do not mention graphs, charts, data, numbers, or statistics, etc, which you cannot provide yourself
 
 Write a tweet that this specific user might post, focusing on capturing their authentic voice while addressing the requested topic. The content should feel natural coming from them, even if the topic is different from what they typically discuss.
 """
@@ -302,7 +302,7 @@ IMPORTANT INSTRUCTIONS:
 4. Avoid controversial or polarizing language
 5. Keep the content concise and to the point
 6. Do not add any hashtags or mentions or 'RT' to the tweet
-7. Do not mention any other information that you cannot provide yourself, such as some graphs, data, or statistics, etc
+7. Do not mention graphs, charts, data, numbers, or statistics, etc, which you cannot provide yourself
 
 Write a tweet about the requested topic that would be appropriate for a general audience.
 """
