@@ -21,15 +21,20 @@ LLM_MODELS_INFO = {
     #     "model_api_url": os.environ['OPENROUTER_API'],
     #     "model_access_key": os.environ['OPENROUTER_API_KEY']
     # },
-    "google/gemini-2.5-flash-preview": {
+    # "google/gemini-2.5-pro-preview": {
+    #     "postprocessor": None,
+    #     "model_api_url": os.environ['OPENROUTER_API'],
+    #     "model_access_key": os.environ['OPENROUTER_API_KEY']
+    # },
+    # "google/gemini-2.5-flash-preview": {
+    #     "postprocessor": None,
+    #     "model_api_url": os.environ['OPENROUTER_API'],
+    #     "model_access_key": os.environ['OPENROUTER_API_KEY']
+    # },
+    "gemini/gemini-2.5-flash-preview-05-20": {
         "postprocessor": None,
-        "model_api_url": os.environ['OPENROUTER_API'],
-        "model_access_key": os.environ['OPENROUTER_API_KEY']
-    },
-    "google/gemini-2.5-pro-preview": {
-        "postprocessor": None,
-        "model_api_url": os.environ['OPENROUTER_API'],
-        "model_access_key": os.environ['OPENROUTER_API_KEY']
+        "model_api_url": os.environ['NEBULA_GENERATE_REPLY_API'],
+        "model_access_key": os.environ['NEBULA_API_KEY']
     },
     "meta-llama/Llama-3.3-70B-Instruct": {
         "postprocessor": None,
